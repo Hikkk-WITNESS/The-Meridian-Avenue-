@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Share+Tech+Mono&family=JetBrains+Mono:wght@700&display=swap');
+
+/* === 強制透明背景 === */
+html, body {
+    background: transparent !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 100%;
+}
+
+
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+:root {
+    --term-bg: #0a0a0a;
+    --term-grid: #1a1a1a;
+    --term-border: #333;
+    --term-text: #a8a8a8;
+    
+    /* 角色專屬色 */
+    --color-dawn: #d4a017;   /* 主角：琥珀金 */
+    --color-nic: #5a8fb4;    /* 追擊：軍工藍 */
+    --color-sehee: #b45a8f;  /* 混亂：褪色紫紅 */
+    --color-laure: #8e7cc3;  /* 伏擊：廢土紫晶 */
+    --color-dot: #a07812;    /* 零件 */
+    
+    /* UI 顏色 */
+    --color-ui-gold: #c59d5f; 
+    --color-danger-blood: #a31621; 
+    --color-warn-gray: #888888;    
+    --color-obsess-orange: #d68100; 
+    --color-safe-green: #4caf50; /* 安全/簡單模式 */
+
+    --scan-line: rgba(0, 0, 0, 0.5);
+}
+
+* {
+    touch-action: none !important;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    overflow: hidden;
+    font-family: 'Share Tech Mono', monospace;
+padding: 15px 12px !important; /* 用 !important 強制生效 */
+    box-sizing: border-box !important;
+
+}
+
+.zero-terminal {
+    background: var(--term-bg);
+    border: 2px solid #2a2a2a;
+    padding: 6px;
+    color: var(--term-text);
+    position: relative;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0,0,0,0.8);
+    width: 100%;
+    max-width: 400px; 
+    display: flex;
+    flex-direction: column;
+    border-radius: 6px;
+    background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+ margin: 15px 5px; /* 額外的小間距 */
+
+}
+
+.zero-terminal::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 200; 
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none; 
+}
+
+.term-header {
+    border-bottom: 1px solid var(--term-border);
+    padding: 8px 10px;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: #666;
+    background: rgba(255,255,255,0.02);
+    position: relative;
+    z-index: 100; 
+}
+
+/* 難度切換按鈕樣式 */
+#diffToggle {
+    cursor: pointer;
+    transition: color 0.3s;
+}
+#diffToggle:hover {
+    color: #fff;
+    text-shadow: 0 0 5px rgba(255,255,255,0.5);
+}
+
+.game-canvas-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1; 
+    background: #050505;
+    border: 1px solid #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: inset 0 0 10px #000;
+}
+
+canvas {
+    background: transparent;
+    image-rendering: pixelated;
+    display: block;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0; 
+    background: rgba(8, 8, 8, 0.96);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 150; 
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #333;
+}
+
+.intro-text { color: #888; font-size: 13px; margin-bottom: 12px; line-height: 1.4; max-width: 90%; }
+.term-title-small { color: var(--color-ui-gold); font-size: 16px; margin-bottom: 5px; letter-spacing: 1px; border-bottom: 1px solid rgba(197, 157, 95, 0.3); padding-bottom: 2px; }
+
+.btn-term {
+    background: rgba(197, 157, 95, 0.05);
+    border: 1px solid var(--color-ui-gold);
+    color: var(--color-ui-gold);
+    padding: 10px 24px;
+    font-family: 'Share Tech Mono';
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+    text-transform: uppercase;
+    box-shadow: 0 0 5px rgba(197, 157, 95, 0.1);
+    pointer-events: auto !important;
+    position: relative;
+    transition: all 0.2s;
+    margin-top: 5px;
+}
+.btn-term:active { background: var(--color-ui-gold); color: #000; transform: scale(0.96); }
+
+#deathMsg, #mercyMsg {
+    font-size: 14px; 
+    font-weight: normal; 
+    margin-bottom: 20px; 
+    max-width: 85%; 
+    line-height: 1.5;
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.8);
+    font-style: italic;
+    border-left: 2px solid transparent; 
+    padding-left: 10px;
+    text-align: left;
+    width: 90%;
+}
+
+.status-line {
+    padding: 8px 10px;
+    font-size: 11px;
+    color: #555;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #222;
+    margin-top: 5px;
+    position: relative;
+    z-index: 100;
+}
+
+.score-val { color: var(--color-dawn); font-weight: bold; font-size: 14px; }
+.hidden { display: none !important; }
+
+/* 減弱閃爍效果 */
+@keyframes subtle-flicker { 
+    0% { opacity: 0.98; } 
+    50% { opacity: 1; } 
+    100% { opacity: 0.98; } 
+}
+
+.zero-terminal { 
+    animation: subtle-flicker 10s infinite; /* 更慢更微弱 */
+}
+
+/* 勝利畫面特效 */
+.win-glow { animation: winPulse 2s infinite alternate; }
+@keyframes winPulse { from { box-shadow: 0 0 10px var(--color-dawn); } to { box-shadow: 0 0 30px var(--color-dawn); } }
+
+</style>
+</head>
+<body>
+
+<div class="zero-terminal">
+    <div class="term-header">
+        <span>SYS.LOG_V10.3_FIX</span>
+        <!-- 難度切換開關 -->
+        <span id="diffToggle">[MODE: HARD]</span>
+    </div>
+
+    <div class="game-canvas-container" id="gameArea">
+        <canvas id="gc"></canvas>
+        
+        <div class="overlay" id="startScreen">
+          <div class="term-title-small">TARGET: DAWN</div>
+          <p class="intro-text">
+          WARNING: MULTIPLE HOSTILES.<br>
+          <span id="modeText" style="color:#aaa; font-size:11px;">[CURRENT: HARDCORE MODE]</span><br>
+          <span style="color:#a31621; font-weight:bold;">DO NOT LET THEM CATCH YOU.</span>
+          </p>
+          <button class="btn-term" id="startBtn">RUN</button>
+        </div>
+        
+        <!-- 失敗介面 -->
+        <div class="overlay hidden" id="gameOverScreen">
+          <h2 style="color:#555; font-size:12px; margin-bottom:15px; letter-spacing:2px;" id="gameOverTitle">// SYSTEM_INTERRUPT</h2>
+          <p id="deathMsg"></p>
+          <button class="btn-term" style="border-color:#444; color:#888;" id="retryBtn">STRUGGLE</button>
+        </div>
+        
+        <!-- 饒恕/反擊介面 (僅EASY模式) -->
+        <div class="overlay hidden" id="mercyScreen">
+          <h2 style="color:var(--color-safe-green); font-size:12px; margin-bottom:15px; letter-spacing:2px;">// MERCY_TRIGGERED</h2>
+          <p id="mercyMsg" style="color:#aaa; border-left-color:var(--color-safe-green);"></p>
+          <p style="font-size:10px; color:#555; margin-top:5px;">( ONE CHANCE USED )</p>
+          <button class="btn-term" style="border-color:var(--color-safe-green); color:var(--color-safe-green);" id="escapeBtn">ESCAPE</button>
+        </div>
+        
+        <!-- 勝利介面 -->
+        <div class="overlay hidden" id="winScreen">
+          <h2 style="color:var(--color-dawn); margin-bottom:10px; font-size:20px;">// FREEDOM_ACHIEVED</h2>
+          <div style="color:#fff; font-size:12px; margin-bottom:15px; line-height:1.6; text-align:left; padding:0 20px;">
+          > STATUS: ESCAPED<br>
+          > PURSUERS: LEFT BEHIND<br>
+          > REWARD: You feel the wind on your face. The cage is open.<br>
+          <br>
+          <span style="color:var(--color-ui-gold); font-style:italic;">"Run, Dawnie. Before they change their minds."</span>
+          </div>
+          <button class="btn-term" id="nextBtn">RUN AGAIN</button>
+        </div>
+    </div>
+    
+    <div class="status-line">
+        <span>PROGRESS: <span id="score" class="score-val">0%</span></span>
+        <span>THREAT: <span id="threatLevel" style="color:var(--color-warn-gray)">LOW</span></span>
+    </div>
+</div>
+
+<script>
+// --- 核心變量 ---
+const canvas = document.getElementById('gc');
+const ctx = canvas.getContext('2d');
+const COLS = 21;
+const ROWS = 21;
+let TILE_SIZE = 16;
+let map = [];
+let dots = new Set();
+let totalDots = 0;
+let score = 0;
+let gameState = 'ready';
+let animationId = null;
+let difficulty = 'HARD'; // 默認難度
+let mercyUsed = false;   // 是否已使用過饒恕機會
+
+const COLORS = {
+    dawn: '#d4a017', nic: '#5a8fb4', laure: '#8e7cc3', sehee: '#b45a8f',
+    wall: '#111111', wallBorder: '#2a2a2a', dot: '#a07812'
+};
+
+// 完美回字形迷宮
+const PRESET_MAP = [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,1,1,0,1],
+    [1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1],
+    [1,0,1,0,1,1,1,1,1,0,1,1,1,0,1,0,1,0,1,1,1],
+    [1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,1],
+    [1,0,1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1],
+    [1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1],
+    [1,1,1,0,1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+    [1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1],
+    [1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
+    [1,0,1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,1,0,1],
+    [1,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1],
+    [1,0,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+// --- 語音庫 V10.1 (捕獲確認修正版) ---
+// 邏輯修正：所有文本現在都代表【已經被抓到】的時刻，而非追捕中。
+
+// 階段 1: 灰色 (0% - 33%)
+// 語境：輕鬆捕獲，輕蔑，不費吹灰之力
+const QUOTES_EARLY = {
+    nic: [
+        "Too slow. Got you.",
+        "Target secured. That was easy.",
+        "You didn't even make me sweat.",
+        "Caught you. Stop squirming.",
+        "Training exercise over. You failed."
+    ],
+    sehee: [
+        "Caught you! You're so clumsy~",
+        "Hug attack! Never letting go!",
+        "Gotcha! You smell nice today.",
+        "My toy now! No take-backs!",
+        "Too easy~ I wasn't even trying!"
+    ],
+    laure: [
+        "A disappointing attempt. You are caught.",
+        "Such a clumsy little thing.",
+        "Nowhere to run, ma petite.",
+        "Caught. You are mine now.",
+        "Effortless. Come here."
+    ]
+};
+
+// 階段 2: 橙色 (33% - 50%)
+// 語境：憤怒捕獲，強制壓制，失去耐心，絕對控制
+const QUOTES_MID = {
+    nic: [
+        "I HAVE you. Stop fighting!",
+        "Pinned down. You're not going anywhere.",
+        "You made me chase you. Bad move.",
+        "Handcuffs. Now. Don't resist.",
+        "I'm dragging you to the cell myself.",
+        "You're done running. Forever.",
+        "Caught. And you're in big trouble.",
+        "Submission is mandatory. Stay down.",
+        "I'm locking this door. Look at me.",
+        "Secure. You are my prisoner now."
+    ],
+    sehee: [
+        "I caught you! I'm going to break your legs! :)",
+        "Mine! Mine! Mine! You can't leave!",
+        "Pinned you down~ Now say sorry!",
+        "Got you! I'm locking you in my box!",
+        "No more running! Or I'll bite you hard!",
+        "You're stuck with me forever now!",
+        "I win! You lose your freedom!",
+        "Don't struggle, I'll just squeeze tighter!",
+        "Caught you! Let's play 'doctor' now!",
+        "You made me angry... punishment time!"
+    ],
+    laure: [
+        "Your rebellion ends in my arms.",
+        "Patience, ma chérie. You are making a scene.",
+        "Must we do this? Come here.",
+        "Your rebellion is cute, but futile.",
+        "Let us go home. The chase is over.",
+        "Shh. Be still. You are safe now.",
+        "I have you. No more running.",
+        "Such spirit. But you are mine.",
+        "Enough games. Walk with me.",
+        "Captured. Now, behave yourself."
+    ]
+};
+
+// 階段 3: 紅色 (50%+)
+// 語境：性張力捕獲，身體佔有，粗暴，床邊耳語，NSFW暗示
+const QUOTES_LATE = {
+    nic: [
+        "Restrained on my bed. Spread your legs.",
+        "I'm going to fuck the defiance out of you.",
+        "Caught. I'll make you scream my name.",
+        "Strip. Now. I need to inspect my prize.",
+        "You're mine to use tonight. Any way I want.",
+        "Pinned. I'm going to leave marks everywhere.",
+        "Good luck walking tomorrow. Target secured.",
+        "I own this body. Do not resist.",
+        "Handcuffed and helpless. Just how I like it.",
+        "You're not leaving until I'm satisfied."
+    ],
+    sehee: [
+        "Caught you~ Time to breed my little toy!",
+        "I'm gonna fuck you until you break! :)",
+        "Pinned! Open wide for me, Dawnie~",
+        "My turn to ride you! Don't pass out!",
+        "I'll fill you up so you can't run away!",
+        "Gotcha! Let's make a mess on the floor!",
+        "Your body feels so good when it shakes~",
+        "I'm gonna eat you whole! Right here!",
+        "Scream for me! Louder! I caught you!",
+        "You're my personal fuck-doll now~"
+    ],
+    laure: [
+        "On your knees. Service me, maintenant.",
+        "I will ruin this pretty hole. Pour toujours.",
+        "Captured. Prepare to be used, ma putain.",
+        "You exist for my pleasure. Spread them.",
+        "I will break you in so beautifully.",
+        "My property. I will fill you with myself.",
+        "Beg for it. You belong on my leash.",
+        "Caught. I will taste every inch of you.",
+        "Submission is total. Give me your body.",
+        "You are nothing but my warm hole now."
+    ]
+};  // ← 這裡補上了缺失的 } 和 ;
+
+const QUOTES_MERCY = {
+    nic: [
+        "Slippery... Get out of here before I change my mind.",
+        "A lucky break. Start running.",
+        "Consider this a head start. Go."
+    ],
+    sehee: [
+        "Oops! I slipped~ Run run run!",
+        "Letting you go! Chase is more fun!",
+        "Aww, you kicked me! Go away!"
+    ],
+    laure: [
+        "I will allow this... once.",
+        "Go. Show me a better performance.",
+        "A moment of grace. Use it well."
+    ]
+};
+
+
+class Entity {
+    constructor(x, y, color, type) {
+        this.gridX = x; this.gridY = y;
+        this.pixelX = x * TILE_SIZE; this.pixelY = y * TILE_SIZE;
+        this.color = color;
+        this.type = type;
+        this.dir = {x:0, y:0};
+        this.nextDir = {x:0, y:0};
+        this.moving = false;
+        
+        // --- 速度調整邏輯 ---
+        if(this.type === 'player') {
+          this.speed = 0.18; // 玩家速度不變
+        } else {
+          // 敵人速度根據難度調整
+          let baseSpeed = 0;
+          if (this.type === 'nic') baseSpeed = 0.10;
+          else if (this.type === 'laure') baseSpeed = 0.09;
+          else baseSpeed = 0.11;
+          
+          if (difficulty === 'EASY') {
+          this.speed = baseSpeed * 0.55; // 簡單模式：敵人速度減半
+          } else {
+          this.speed = baseSpeed;
+          }
+        }
+        this.lastMove = {x:0, y:0};
+    }
+    
+    update() {
+        if(gameState !== 'playing') return;
+        if(Math.abs(this.pixelX - this.gridX*TILE_SIZE) < 2.0 && Math.abs(this.pixelY - this.gridY*TILE_SIZE) < 2.0) {
+          this.pixelX = this.gridX * TILE_SIZE;
+          this.pixelY = this.gridY * TILE_SIZE;
+          if(this.type === 'player') {
+          const key = `${this.gridX},${this.gridY}`;
+          if(dots.has(key)) {
+          dots.delete(key);
+          score++;
+          document.getElementById('score').innerText = Math.floor((score / totalDots) * 100) + '%';
+          updateThreatLevel();
+          if(dots.size === 0) endGame(true);
+          }
+          if(this.nextDir.x !== 0 || this.nextDir.y !== 0) {
+          if(!isWall(this.gridX + this.nextDir.x, this.gridY + this.nextDir.y)) {
+          this.dir = {...this.nextDir};
+          this.nextDir = {x:0, y:0};
+          }
+          }
+          } 
+          if(!isWall(this.gridX + this.dir.x, this.gridY + this.dir.y)) {
+          this.moving = true;
+          this.gridX += this.dir.x;
+          this.gridY += this.dir.y;
+          this.lastMove = {...this.dir};
+          } else {
+          this.moving = false;
+          }
+        }
+        if(this.moving) {
+          this.pixelX += this.dir.x * (TILE_SIZE * this.speed);
+          this.pixelY += this.dir.y * (TILE_SIZE * this.speed);
+        }
+    }
+    
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = this.color;
+        ctx.fillRect(this.pixelX+3, this.pixelY+3, TILE_SIZE-6, TILE_SIZE-6);
+        ctx.shadowBlur = 0; 
+    }
+    
+    think() {
+        if(this.type === 'player') return;
+        if(Math.abs(this.pixelX - this.gridX*TILE_SIZE) < 2.0 && Math.abs(this.pixelY - this.gridY*TILE_SIZE) < 2.0) {
+          const dirs = [{x:0,y:-1}, {x:0,y:1}, {x:-1,y:0}, {x:1,y:0}];
+          let valid = dirs.filter(d => !isWall(this.gridX+d.x, this.gridY+d.y));
+          if(valid.length > 1) valid = valid.filter(d => !(d.x === -this.lastMove.x && d.y === -this.lastMove.y));
+          if(valid.length === 0) return;
+          
+          if(this.type === 'nic') {
+          valid.sort((a, b) => {
+          const distA = Math.abs((this.gridX+a.x) - player.gridX) + Math.abs((this.gridY+a.y) - player.gridY);
+          const distB = Math.abs((this.gridX+b.x) - player.gridX) + Math.abs((this.gridY+b.y) - player.gridY);
+          return distA - distB;
+          });
+          this.dir = valid[0];
+          } else if(this.type === 'laure') {
+          const targetX = player.gridX + (player.dir.x * 4);
+          const targetY = player.gridY + (player.dir.y * 4);
+          valid.sort((a, b) => {
+          const distA = Math.abs((this.gridX+a.x) - targetX) + Math.abs((this.gridY+a.y) - targetY);
+          const distB = Math.abs((this.gridX+b.x) - targetX) + Math.abs((this.gridY+b.y) - targetY);
+          return distA - distB;
+          });
+          this.dir = valid[0];
+          } else if(this.type === 'sehee') {
+          if(Math.random() < 0.2) {
+          valid.sort((a, b) => {
+          const distA = Math.abs((this.gridX+a.x) - player.gridX) + Math.abs((this.gridY+a.y) - player.gridY);
+          const distB = Math.abs((this.gridX+b.x) - player.gridX) + Math.abs((this.gridY+b.y) - player.gridY);
+          return distA - distB;
+          });
+          this.dir = valid[0];
+          } else {
+          this.dir = valid[Math.floor(Math.random() * valid.length)];
+          }
+          }
+        }
+    }
+}
+
+let player;
+let enemies = [];
+
+function isWall(x, y) {
+    if(x<0 || x>=COLS || y<0 || y>=ROWS) return true;
+    return map[y][x] === 1;
+}
+
+function updateThreatLevel() {
+    const threatSpan = document.getElementById('threatLevel');
+    const ratio = score / totalDots;
+    if (ratio >= 0.5) {
+        threatSpan.innerText = "CRITICAL";
+        threatSpan.style.color = "var(--color-danger-blood)";
+        threatSpan.style.fontWeight = "bold";
+    } else if (ratio >= 0.33) {
+        threatSpan.innerText = "ESCALATING";
+        threatSpan.style.color = "var(--color-obsess-orange)";
+        threatSpan.style.fontWeight = "bold";
+    } else {
+        threatSpan.innerText = "LOW";
+        threatSpan.style.color = "var(--color-warn-gray)";
+        threatSpan.style.fontWeight = "normal";
+    }
+}
+
+function initGame() {
+    if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
+    const size = document.getElementById('gameArea').clientWidth;
+    canvas.width = size; canvas.height = size;
+    TILE_SIZE = size / COLS;
+    
+    map = PRESET_MAP;
+    dots.clear();
+    for(let y=0; y<ROWS; y++) for(let x=0; x<COLS; x++) if(map[y][x] === 0) dots.add(`${x},${y}`);
+    totalDots = dots.size;
+    
+    player = new Entity(1, 1, COLORS.dawn, 'player');
+    enemies = [
+        new Entity(COLS-2, 1, COLORS.nic, 'nic'),
+        new Entity(1, ROWS-2, COLORS.laure, 'laure'),
+        new Entity(COLS-2, ROWS-2, COLORS.sehee, 'sehee')
+    ];
+    
+    score = 0;
+    mercyUsed = false; 
+    document.getElementById('score').innerText = '0%';
+    updateThreatLevel();
+    gameState = 'playing';
+    gameLoop();
+}
+
+function triggerMercy(enemy) {
+    gameState = 'paused';
+    const msgEl = document.getElementById('mercyMsg');
+    const quotes = QUOTES_MERCY[enemy.type];
+    
+    // --- 修正1: 名字顯示映射 ---
+    const nameMap = { 'nic': 'NICOLETTE', 'sehee': 'SEHEE', 'laure': 'LAURE' };
+    const displayName = nameMap[enemy.type] || enemy.type.toUpperCase();
+    
+    msgEl.innerText = `${displayName}: ${quotes[Math.floor(Math.random() * quotes.length)]}`;
+    document.getElementById('mercyScreen').classList.remove('hidden');
+    mercyUsed = true;
+    
+    // 重置玩家位置
+    player.gridX = 1; player.gridY = 1;
+    player.pixelX = TILE_SIZE; player.pixelY = TILE_SIZE;
+    player.dir = {x:0, y:0}; player.nextDir = {x:0, y:0};
+}
+
+function gameLoop() {
+    if(gameState !== 'playing') {
+       // --- 修正2: 確保循環停止 ---
+       if(animationId) { cancelAnimationFrame(animationId); animationId = null; }
+       return;
+    }
+    ctx.fillStyle = COLORS.wall; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    for(let y=0; y<ROWS; y++) for(let x=0; x<COLS; x++) {
+        if(map[y][x] === 1) { ctx.strokeStyle = COLORS.wallBorder; ctx.lineWidth = 1; ctx.strokeRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE); } 
+        else if(dots.has(`${x},${y}`)) { ctx.fillStyle = COLORS.dot; ctx.fillRect(x*TILE_SIZE + TILE_SIZE/2 -2, y*TILE_SIZE + TILE_SIZE/2 -2, 4, 4); }
+    }
+    
+    player.update(); player.draw();
+    
+    enemies.forEach(e => {
+        e.think(); e.update(); e.draw();
+        const dist = Math.hypot(player.pixelX - e.pixelX, player.pixelY - e.pixelY);
+        
+        if(dist < TILE_SIZE/1.5) {
+          if (difficulty === 'EASY' && !mercyUsed) {
+          triggerMercy(e);
+          } else {
+          const ratio = score / totalDots;
+          let quotesList, styleType;
+          if (ratio >= 0.5) { quotesList = QUOTES_LATE[e.type]; styleType = 'late'; } 
+          else if (ratio >= 0.33) { quotesList = QUOTES_MID[e.type]; styleType = 'mid'; } 
+          else { quotesList = QUOTES_EARLY[e.type]; styleType = 'early'; }
+          
+          const randomQuote = quotesList[Math.floor(Math.random() * quotesList.length)];
+          const name = e.type === 'nic' ? 'NICOLETTE' : (e.type === 'sehee' ? 'SEHEE' : 'LAURE');
+          endGame(false, `${name}: ${randomQuote}`, styleType);
+          }
+        }
+    });
+    
+    animationId = requestAnimationFrame(gameLoop);
+}
+
+function endGame(win, msg, styleType) {
+    gameState = win ? 'win' : 'gameover';
+    if(animationId) { cancelAnimationFrame(animationId); animationId = null; }
+    if(win) {
+        document.getElementById('winScreen').classList.remove('hidden');
+    } else {
+        const msgEl = document.getElementById('deathMsg');
+        const titleEl = document.getElementById('gameOverTitle');
+        msgEl.innerText = msg;
+        if (styleType === 'late') {
+          msgEl.style.color = "var(--color-danger-blood)"; msgEl.style.borderLeftColor = "var(--color-danger-blood)"; titleEl.innerText = "// OWNERSHIP ESTABLISHED"; titleEl.style.color = "var(--color-danger-blood)";
+        } else if (styleType === 'mid') {
+          msgEl.style.color = "var(--color-obsess-orange)"; msgEl.style.borderLeftColor = "var(--color-obsess-orange)"; titleEl.innerText = "// TARGET LOCKED"; titleEl.style.color = "var(--color-obsess-orange)";
+        } else {
+          msgEl.style.color = "var(--color-warn-gray)"; msgEl.style.borderLeftColor = "var(--color-warn-gray)"; titleEl.innerText = "// TARGET SECURED"; titleEl.style.color = "#555";
+        }
+        document.getElementById('gameOverScreen').classList.remove('hidden');
+    }
+}
+
+// --- 難度切換邏輯 ---
+document.getElementById('diffToggle').addEventListener('click', () => {
+    difficulty = difficulty === 'HARD' ? 'EASY' : 'HARD';
+    const toggleEl = document.getElementById('diffToggle');
+    const modeTextEl = document.getElementById('modeText');
+    
+    if (difficulty === 'EASY') {
+        toggleEl.innerText = "[MODE: EASY]";
+        toggleEl.style.color = "var(--color-safe-green)";
+        modeTextEl.innerText = "[CURRENT: MERCY PROTOCOL ACTIVE]";
+        modeTextEl.style.color = "var(--color-safe-green)";
+    } else {
+        toggleEl.innerText = "[MODE: HARD]";
+        toggleEl.style.color = "#666";
+        modeTextEl.innerText = "[CURRENT: HARDCORE MODE]";
+        modeTextEl.style.color = "#aaa";
+    }
+    
+    if (gameState === 'playing' || gameState === 'gameover' || gameState === 'win') {
+        document.getElementById('startScreen').classList.remove('hidden');
+        document.getElementById('gameOverScreen').classList.add('hidden');
+        document.getElementById('winScreen').classList.add('hidden');
+        document.getElementById('mercyScreen').classList.add('hidden');
+        gameState = 'ready';
+        if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
+    }
+});
+
+// 操作綁定
+window.addEventListener('keydown', e => { if(gameState !== 'playing') return; if(e.key === 'ArrowUp') player.nextDir = {x:0, y:-1}; if(e.key === 'ArrowDown') player.nextDir = {x:0, y:1}; if(e.key === 'ArrowLeft') player.nextDir = {x:-1, y:0}; if(e.key === 'ArrowRight') player.nextDir = {x:1, y:0}; });
+let tx=0, ty=0; const gameArea = document.getElementById('gameArea');
+gameArea.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, {passive: false});
+gameArea.addEventListener('touchmove', e => { e.preventDefault(); if(!tx || !ty) return; let cx = e.touches[0].clientX; let cy = e.touches[0].clientY; let dx = cx - tx; let dy = cy - ty; if(Math.abs(dx) > Math.abs(dy)) { if(Math.abs(dx) > 3) { player.nextDir = {x: dx>0?1:-1, y:0}; tx = cx; ty = cy; } } else { if(Math.abs(dy) > 3) { player.nextDir = {x:0, y: dy>0?1:-1}; tx = cx; ty = cy; } } }, {passive: false});
+
+function bindBtn(id, action) { const btn = document.getElementById(id); if(!btn) return; const handler = (e) => { e.preventDefault(); e.stopPropagation(); action(); }; btn.addEventListener('touchstart', handler, {passive: false}); btn.addEventListener('click', handler); btn.addEventListener('pointerup', handler); }
+
+bindBtn('startBtn', () => { document.getElementById('startScreen').classList.add('hidden'); initGame(); });
+bindBtn('retryBtn', () => { document.getElementById('gameOverScreen').classList.add('hidden'); initGame(); });
+bindBtn('nextBtn', () => { document.getElementById('winScreen').classList.add('hidden'); initGame(); });
+bindBtn('escapeBtn', () => { 
+    document.getElementById('mercyScreen').classList.add('hidden'); 
+    
+    // --- 修正3: 清除舊循環，防止疊加 ---
+    if(animationId) { cancelAnimationFrame(animationId); animationId = null; }
+    
+    gameState = 'playing'; 
+    gameLoop(); 
+});
+
+</script>
+</body>
+</html>
