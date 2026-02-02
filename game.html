@@ -1,0 +1,3052 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Share+Tech+Mono&family=JetBrains+Mono:wght@700&display=swap');
+
+/* === 基础环境配置 === */
+html, body {
+    background: transparent !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 100%;
+}
+
+:root {
+    --term-bg: #0a0a0a;
+    --term-text: #a8a8a8;
+    --color-dawn: #d4a017;
+    --color-nic: #5a8fb4;
+    --color-sehee: #b45a8f;
+    --color-laure: #8e7cc3;
+    --color-dot: #a07812;
+    --color-ui-gold: #c59d5f;
+    --color-danger-blood: #a31621; /* 调暗红色，去除刺眼感 */
+    --color-warn-gray: #888888;
+    --color-obsess-orange: #d68100;
+    --color-safe-green: #4caf50;
+   --color-hard-red: #a31621;  
+}
+
+* {
+    touch-action: none !important;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    overflow: auto;
+    font-family: 'Share Tech Mono', monospace;
+    padding: 15px 12px !important; 
+}
+
+/* === 终端容器 === */
+.zero-terminal {
+    background: var(--term-bg);
+    border: 2px solid #2a2a2a;
+    padding: 6px;
+    color: var(--term-text);
+    position: relative;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0,0,0,0.8);
+    width: 100%;
+    max-width: 400px;
+    min-width: 320px; 
+    display: flex;
+    flex-direction: column;
+    border-radius: 6px;
+    background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+    margin: 15px 5px !important; 
+    flex-shrink: 0; 
+}
+
+.zero-terminal::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 200; 
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none; 
+}
+
+/* === 顶部栏 === */
+.term-header {
+    border-bottom: 1px solid #333;
+    padding: 8px 10px;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: #666;
+    background: rgba(255,255,255,0.02);
+    position: relative;
+    z-index: 100;
+    height: 32px;
+}
+
+.header-left {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    white-space: nowrap;
+}
+
+.header-right {
+    flex-shrink: 0;
+    text-align: right;
+    min-width: 100px;
+}
+
+/* 在 .status-line 之前或之後添加這段 */
+.header-locked {
+    opacity: 0.7;
+    filter: blur(0.5px);
+    pointer-events: none;
+}
+
+#diffToggle, #mapToggle {
+    cursor: pointer;
+    transition: color 0.3s;
+}
+#diffToggle:hover, #mapToggle:hover {
+    color: #fff;
+}
+
+/* === 游戏画布区域 === */
+.game-canvas-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1; 
+    background: #050505;
+    border: 1px solid #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: inset 0 0 10px #000;
+}
+
+canvas {
+    background: transparent;
+    image-rendering: pixelated;
+    display: block;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+}
+
+/* === 覆盖层 === */
+.overlay {
+    position: absolute;
+    inset: 0; 
+    background: rgba(8, 8, 8, 0.96);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 150; 
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #333;
+}
+
+.intro-text { color: #888; font-size: 13px; margin-bottom: 12px; line-height: 1.4; max-width: 90%; }
+.term-title-small { color: var(--color-ui-gold); font-size: 16px; margin-bottom: 5px; letter-spacing: 1px; border-bottom: 1px solid rgba(197, 157, 95, 0.3); padding-bottom: 2px; }
+
+.btn-term {
+    background: rgba(197, 157, 95, 0.05);
+    border: 1px solid var(--color-ui-gold);
+    color: var(--color-ui-gold);
+    padding: 10px 24px;
+    font-family: 'Share Tech Mono';
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+    text-transform: uppercase;
+    box-shadow: 0 0 5px rgba(197, 157, 95, 0.1);
+    pointer-events: auto !important;
+    margin-top: 5px;
+    transition: all 0.2s;
+}
+.btn-term:active { background: var(--color-ui-gold); color: #000; transform: scale(0.96); }
+
+#hunterLivesUI {
+    color: var(--color-danger-blood);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    margin: 0 8px;
+}
+
+#deathMsg, #mercyMsg {
+    font-size: 14px; 
+    font-weight: normal; 
+    margin-bottom: 20px; 
+    max-width: 90%; 
+    line-height: 1.5;
+    /* 移除之前的文字阴影，保持原来颜色 */
+    text-shadow: none !important;
+    font-style: italic;
+    border-left: 2px solid transparent; 
+    padding-left: 10px;
+    text-align: left;
+}
+
+/* =========================
+   HUNTER DEATH MESSAGE FIX
+========================= */
+
+.hunter-death #deathMsg {
+  color: var(--color-danger-blood);
+  border-left-color: var(--color-danger-blood);
+  text-shadow:
+    0 0 6px rgba(163,22,33,0.45),
+    0 0 14px rgba(163,22,33,0.25);
+}
+
+/* === 底部状态栏 === */
+.status-line {
+    padding: 8px 10px;
+    font-size: 11px;
+    color: #555;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #222;
+    margin-top: 5px;
+    height: 30px;
+    align-items: center;
+}
+
+.score-val { color: var(--color-dawn); font-weight: bold; font-size: 14px; }
+.hidden { display: none !important; }
+
+/* 修正后的呼吸动画：极度微弱 */
+@keyframes subtle-flicker { 
+    0%, 100% { opacity: 0.98; } 50% { opacity: 1; } 
+}
+.zero-terminal { animation: subtle-flicker 10s infinite; }
+
+/* =========================
+   INFO TOGGLE EFFECT
+========================= */
+
+@keyframes infoPulseStrong {
+  0%, 100% {
+    opacity: 0.6;
+    text-shadow: 0 0 6px rgba(197,157,95,0.6);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 14px rgba(197,157,95,0.9);
+  }
+}
+
+@keyframes infoPulseSoft {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+
+.info-pulse-strong {
+  color: var(--color-ui-gold);
+  animation: infoPulseStrong 1.8s infinite;
+}
+
+.info-pulse-soft {
+  color: var(--color-ui-gold);
+  animation: infoPulseSoft 3.2s infinite;
+}
+
+.info-disabled {
+  opacity: 0.35;
+  pointer-events: none;
+  text-shadow: none;
+}
+
+/* =========================
+   INFO WINDOW OVERLAY
+========================= */
+
+.info-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55); /* 擋 RUN */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+pointer-events: auto;
+}
+
+.info-window {
+  width: 88%;
+  max-width: 360px;
+  background: var(--term-bg);
+  border: 2px solid #2a2a2a;
+  box-shadow:
+    0 0 25px rgba(0,0,0,0.8),
+    inset 0 0 12px rgba(0,0,0,0.8);
+  padding: 14px;
+  font-size: 12px;
+  color: var(--term-text);
+}
+
+/* =========================
+   🖥 INFO TERMINAL SCANLINES
+========================= */
+
+.info-window {
+  position: relative;
+  overflow: hidden;
+}
+
+.info-window {
+  position: relative;
+  overflow: hidden;
+}
+
+/* 文字 */
+.info-title,
+.info-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* 按鈕最高 */
+#infoCloseBtn {
+  position: relative;
+  z-index: 5;
+}
+
+/* 真正的文字掃描線 */
+.info-scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+
+  
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.30) 0px,
+    rgba(0,0,0,0.30) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+
+
+  animation: scanMove 4.5s linear infinite;
+}
+
+@keyframes scanMove {
+  from { background-position-y: 0; }
+  to   { background-position-y: 100%; }
+}
+
+.info-content {
+  position: relative;
+  color: var(--term-text);
+line-height: 1.45;
+
+  /* CRT 掃描線核心 */
+  text-shadow:
+    0 1px rgba(255,255,255,0.12),
+    0 2px rgba(0,0,0,0.35),
+    0 3px rgba(255,255,255,0.06),
+    0 4px rgba(0,0,0,0.25);
+
+  animation: crtTextScan 3.5s linear infinite;
+}
+
+@keyframes crtTextScan {
+  0% {
+    text-shadow:
+      0 1px rgba(255,255,255,0.10),
+      0 2px rgba(0,0,0,0.30),
+      0 3px rgba(255,255,255,0.04),
+      0 4px rgba(0,0,0,0.20);
+  }
+  50% {
+    text-shadow:
+      0 1px rgba(255,255,255,0.16),
+      0 2px rgba(0,0,0,0.40),
+      0 3px rgba(255,255,255,0.08),
+      0 4px rgba(0,0,0,0.30);
+  }
+  100% {
+    text-shadow:
+      0 1px rgba(255,255,255,0.10),
+      0 2px rgba(0,0,0,0.30),
+      0 3px rgba(255,255,255,0.04),
+      0 4px rgba(0,0,0,0.20);
+  }
+}
+.info-title {
+  color: var(--color-ui-gold);
+  font-size: 13px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(197,157,95,0.3);
+  padding-bottom: 4px;
+z-index: 1;
+}
+
+.info-content {
+  line-height: 1.6;
+  margin-bottom: 12px;
+  white-space: pre-line;
+z-index: 1;
+}
+
+
+.hidden {
+  display: none !important;
+}
+
+/* === FIX iOS CLICK FOR INFO WINDOW === */
+.info-overlay,
+.info-overlay * {
+  touch-action: auto !important;
+  pointer-events: auto !important;
+}
+
+.info-alert {
+  animation: infoAlertFlash 0.4s steps(2) 16;
+}
+
+@keyframes infoAlertFlash {
+  0%   { background: rgba(214,179,106,0.9); color: #000; }
+  100% { background: transparent; color: var(--color-info-gold); }
+}
+
+/* =========================
+   FORCE ENABLE INFO CLOSE CLICK (iOS FIX)
+========================= */
+
+#infoCloseBtn {
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+  -webkit-touch-callout: none;
+  position: relative;
+  z-index: 9999;
+}
+
+/* 關掉所有可能擋點擊的假層 */
+#infoCloseBtn::before,
+#infoCloseBtn::after {
+  pointer-events: none !important;
+}
+
+/* =========================
+   CLOSE TEXT SCANLINE (SAFE VERSION)
+========================= */
+
+#infoCloseBtn span {
+  position: relative;
+  z-index: 1;
+}
+
+#infoCloseBtn {
+  overflow: hidden;
+}
+
+#infoCloseBtn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.40) 0px,
+    rgba(0,0,0,0.40) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  animation: closeScanMove 4s linear infinite;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+@keyframes closeScanMove {
+  from { background-position-y: 0; }
+  to   { background-position-y: 100%; }
+}
+
+/* =========================
+   CLOSE BORDER SCANLINES
+========================= */
+
+#infoCloseBtn {
+  --scan-color: rgba(0,0,0,0.40); /* 掃描線顏色 */
+  --scan-thick: 1px;             /* 線的厚度 */
+  --scan-gap: 2px;               /* 線與線的間隔 */
+}
+
+/* 邊框掃描線（內框） */
+#infoCloseBtn::before {
+  content: "";
+  position: absolute;
+  inset: 1px; /* 往內縮，貼著邊框 */
+  pointer-events: none;
+  z-index: 0;
+
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      var(--scan-color) 0,
+      var(--scan-color) var(--scan-thick),
+      transparent var(--scan-thick),
+      transparent calc(var(--scan-thick) + var(--scan-gap))
+    );
+
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+
+  animation: closeBorderScan 5s linear infinite;
+}
+
+@keyframes closeBorderScan {
+  from { background-position-y: 0; }
+  to   { background-position-y: 100%; }
+}
+
+/* =========================
+   INFO TITLE BAR + CLOSE
+========================= */
+
+.info-title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+
+  margin-bottom: 6px;
+}
+
+/* 原本標題維持風格 */
+.info-title {
+  font-family: 'Courier Prime', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+/* [ × ] 關閉鍵 */
+.info-close {
+  background: none;
+  border: none;
+  padding: 0;
+
+  font-family: 'Courier Prime', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+
+  color: var(--color-ui-gold);
+  cursor: pointer;
+
+  position: relative;
+
+  /* iOS 保險 */
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+}
+
+/* 掃描線（只蓋字） */
+.info-close::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.35) 0px,
+    rgba(0,0,0,0.35) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+
+  animation: infoCloseScan 3.8s linear infinite;
+  mix-blend-mode: multiply;
+}
+
+@keyframes infoCloseScan {
+  from { background-position-y: 0; }
+  to   { background-position-y: 100%; }
+}
+.info-close {
+  line-height: 1;
+}.hunter-toast {
+  position: absolute;
+
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: #000;              /* ⚠️ 必須是實心黑 */
+  border: 1px solid #c59d5f;
+  padding: 6px 14px;
+
+  overflow: hidden;
+  z-index: 9999;
+}
+
+.hunter-toast {
+  position: fixed;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+
+  background: #000;
+  border: 1px solid var(--color-ui-gold);
+  padding: 6px 14px;
+  overflow: hidden;
+}
+
+/* 👇 跟 info 一樣的掃描線層 */
+.toast-scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.35) 0px,
+    rgba(0,0,0,0.35) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+
+  animation: scanMove 4.5s linear infinite;
+}
+
+.toast-content {
+  position: relative;
+  z-index: 1;
+
+  color: var(--color-ui-gold);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+
+  text-shadow:
+    0 1px rgba(255,255,255,0.12),
+    0 2px rgba(0,0,0,0.35),
+    0 3px rgba(255,255,255,0.06),
+    0 4px rgba(0,0,0,0.25);
+
+  animation: crtTextScan 3.5s linear infinite;
+}
+
+</style>
+</head>
+<body>
+
+<div class="zero-terminal">
+   <div class="term-header" id="mainHeader">
+  <div class="header-left">
+    <span id="sysLog">SYS.LOG_V10.8</span>
+    <span id="mapToggle">[MAP: 01]</span>
+  </div>
+
+  <div class="header-right">
+    <span id="infoToggle" class="info-disabled">[INFO]</span>
+    <span id="diffToggle">[MODE: NORMAL]</span>
+  </div>
+</div>
+    <div class="game-canvas-container" id="gameArea">
+        <canvas id="gc"></canvas>
+<!-- 這裡：header / canvas / overlay 都在 -->
+
+
+        
+        <!-- 开始界面 -->
+        <div class="overlay" id="startScreen">
+          <div class="term-title-small" id="dawnSecret">TARGET: DAWN</div>
+          <p class="intro-text">
+          WARNING: MULTIPLE HOSTILES.<br>
+          <span id="modeText" style="color:#aaa; font-size:11px;">[CURRENT: STANDARD PROTOCOL]</span><br>
+          <span id="mapText" style="color:#aaa; font-size:11px;">[MAP: CLASSIC]</span><br>
+          <span id="warnText" style="color:#a31621; font-weight:bold;">DO NOT LET THEM CATCH YOU.</span>
+          </p>
+          <button class="btn-term" id="startBtn">RUN</button>
+        </div>
+ 
+
+
+        
+        <!-- 失败界面 -->
+        <div class="overlay hidden" id="gameOverScreen">
+          <h2 id="gameOverTitle" style="color:#555; font-size:12px; margin-bottom:15px; letter-spacing:2px; font-weight: normal; text-shadow: none;">// SYSTEM_INTERRUPT</h2>
+          <p id="deathMsg"></p>
+          <button class="btn-term" style="border-color:#444; color:#888;" id="retryBtn">STRUGGLE</button>
+        </div>
+
+
+        
+        <!-- 饶恕界面 (EASY) -->
+        <div class="overlay hidden" id="mercyScreen">
+          <h2 style="color:var(--color-safe-green); font-size:12px; margin-bottom:15px; letter-spacing:2px;">// MERCY_TRIGGERED</h2>
+          <p id="mercyMsg" style="color:#aaa; border-left-color:var(--color-safe-green);"></p>
+          <p style="font-size:10px; color:#555; margin-top:5px;">( ONE CHANCE USED )</p>
+          <button class="btn-term" style="border-color:var(--color-safe-green); color:var(--color-safe-green);" id="escapeBtn">ESCAPE</button>
+        </div>
+        
+        <!-- 勝利介面 -->
+        <!-- 勝利介面 -->
+        <div class="overlay hidden" id="winScreen">
+            <h2 id="winTitle" style="color:var(--color-dawn); margin-bottom:10px; font-size:20px;">// FREEDOM_ACHIEVED</h2>
+            <div id="winContent" style="color:#fff; font-size:12px; margin-bottom:15px; line-height:1.6; text-align:left; padding:0 10px;">
+                > STATUS: ESCAPED<br>
+                > THOUGHT: The cage is open.<br>
+                <br>
+                <span style="color:var(--color-ui-gold); font-style:italic;">"Run, Dawnie. Before they change their minds."</span>
+            </div>
+            <button class="btn-term" id="nextBtn">RUN AGAIN</button>
+        </div>
+
+
+  
+
+
+
+
+    </div> <!-- 這是 game-canvas-container 的結束標籤 -->
+    
+    <div class="status-line">
+        <span>PROGRESS: <span id="score" class="score-val">0%</span></span>
+<span id="hunterLivesUI" class="hidden"></span>
+        <span>THREAT: <span id="threatLevel" style="color:var(--color-warn-gray)">LOW</span></span>
+    </div>
+
+<!-- ✅ INFO OVERLAY 在這裡！！ -->
+    <div id="infoOverlay" class="info-overlay hidden">
+      <div class="info-window">
+        <div class="info-title-bar">
+  <div class="info-title">// SYSTEM INFO</div>
+  <button id="infoCloseBtn" class="info-close">[ × ]</button>
+</div>
+        <div class="info-content" id="infoContent"></div>
+       
+        <div class="info-scanlines"></div>
+      </div>
+    </div>
+
+
+  </div>
+</body>
+   
+
+<script>
+// --- 核心变量 ---
+const canvas = document.getElementById('gc');
+const ctx = canvas.getContext('2d');
+const gameArea = document.getElementById('gameArea');
+const COLS = 21;
+const ROWS = 21;
+let TILE_SIZE = 16;
+let map = [];
+let dots = new Set();
+let totalDots = 0;
+let score = 0;
+let gameState = 'ready';
+let animationId = null;
+let difficulty = 'NORMAL'; 
+let mercyUsed = false;   
+// 新增：按键状态追踪，解决延迟
+let keys = {}; 
+// === HUNTER MODE ===
+let hunterUnlocked = false;
+let hunterMode = false;
+let dawnClickCount = 0;
+let hunterAllies = [];
+// === Hunter Lives System ===
+let hunterLives = 3;          
+let hunterHitCooldown = 0;    
+const heatMap = {};
+// === Hunter Survival Time ===
+let hunterStartTime = 0;
+let hunterSurviveTime = 0;
+let hunterToastShown = false;
+// ======================
+// 🔴 SEHEE TRAP SYSTEM
+// ======================
+let activeTrap = null; // 同一時間只存在一個陷阱
+
+// ======================
+// 🟣 LAURE CORROSION SYSTEM
+// ======================
+let corrosionTiles = new Map(); 
+// key: "x,y" → { expireTime }
+let corruptionLevel = 0; // 0 ~ 3
+
+// ======================
+// ℹ️ INFO SYSTEM
+// ======================
+let infoLevel = 0; // 0=第一次, 1=第二次, 2=完整
+const infoToggle = document.getElementById('infoToggle');
+const infoOverlay = document.getElementById('infoOverlay');
+const infoContent = document.getElementById('infoContent');
+const infoCloseBtn = document.getElementById('infoCloseBtn');
+
+const INFO_TEXT = {
+  0: `> HUNTER MODE ONLINE
+
+• You can consume enemies.
+• Consumed enemies are converted into allies.
+• Allies will attack hostile targets automatically.
+
+• Convert all three targets to win.
+• Do not let enemies consume all dots.
+
+> You are no longer prey.
+> You can fight back.`,
+
+  2: `You think you are the hunter.
+You are not.
+
+• Converted allies will rebel after 3 seconds.
+• Rebels return as enhanced enemies.
+
+ENEMY ABILITIES:
+• NICOLETTE — Execution protocol. 
+• LAURE — Corrupted ground. 
+• SEHEE — Deploys traps. 
+• Dot consumption increases enemy strength.
+
+PLAYER STATUS:
+• Lives: 3
+• Upon death: 3 seconds of invulnerability.
+
+> Good luck.`
+};
+
+// --- 地图数据 ---
+const MAPS = {
+  0: [ // MAP-01
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,1,1,0,1],
+    [1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1],
+    [1,0,1,0,1,1,1,1,1,0,1,1,1,0,1,0,1,0,1,1,1],
+    [1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,1],
+    [1,0,1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1],
+    [1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1],
+    [1,1,1,0,1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+    [1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1],
+    [1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
+    [1,0,1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,1,0,1],
+    [1,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1],
+    [1,0,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+  ],
+  1: [ // MAP-02
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
+    [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1],
+    [1,1,1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,0,1],
+    [1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,1,1,1,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+    [1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1],
+    [1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,1],
+    [1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1], 
+    [1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,1], 
+    [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,0,1], 
+    [1,0,0,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1], 
+    [1,0,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1], 
+    [1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], 
+    [1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1,0,1], 
+    [1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,1], 
+    [1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1,0,1], 
+    [1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1], 
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] 
+  ],
+  2: [ // MAP-03
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
+    [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
+    [1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1],
+    [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1],
+    [1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1],
+    [1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1],
+    [1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
+    [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1],
+    [1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1],
+    [1,0,1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,0,1],
+    [1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1],
+    [1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1],
+    [1,0,0,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,0,0,1],
+    [1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1],
+    [1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1],
+    [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1],
+    [1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1],
+    [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
+    [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+  ]
+};
+
+let currentMapIdx = 0;
+const mapNames = ["CLASSIC", "SECTOR B", "SYMMETRY"];
+
+const COLORS = {
+    dawn: '#d4a017', nic: '#5a8fb4', laure: '#8e7cc3', sehee: '#b45a8f',
+    wall: '#111111', wallBorder: '#2a2a2a', dot: '#a07812'
+};
+// ================================
+// 🎨 ENTITY STATE COLORS
+// ================================
+const ENTITY_COLORS = {
+    ally: "#bfc3c7", // 🤝 盟友：灰白
+
+    enhanced: {
+        nic:   "#4a4fb7", // 深藍
+        laure: "#8c40bb", // 深紫
+        sehee: "#d1005a"  // 深粉紅
+    }
+};
+
+const QUOTES_EARLY = {
+    nic: ["Too slow.", "I have you. Don't make this complicated.", "Stop wasting my time with these games.", "That's enough running.", "Effortless.","Try harder next time."],
+    sehee: ["Caught you! slowpoke! :p", "Hug attack!", "Gotcha!","I win again! You suck at this!","Did you trip? Hahaha.","Easy peasy! You're losing your touch!"],
+    laure: ["How rude to make a lady chase you.", "A futile effort. You look exhausted.", "How predictable.","A distinctive lack of grace. Unfortunate.","Your technique is sloppy. I expected more.","I do admire the effort. Truly."]
+};
+const QUOTES_MID = {
+    nic: ["Enough. We need to talk.", "You're scared. I can see it. Let me handle it.", "I'm losing my temper. Don't push me further.", "Don't make me do something we'll both regret.", "I don't want to lose you. Not like this.","Just... stay. We can figure this out."],
+    sehee: ["I don't wanna be alone again! Please!", "I'll let go if you promise not to run! ...No, wait, I won't!", "I'll bite you if you struggle! I mean it!", "It's not funny anymore! Come back!", "Why are you leaving?! Don't you like me anymore?!","Hey! That actually hurt!"],
+    laure: ["I am trying to be patient. Do not waste it.", "I don't want to hurt you. Please believe that.", "I don't want to force you...", "Ma chérie, please. Let's talk about this.","Why do you resist? I can give you everything.","Do not turn your back on me. It insults me."]
+};
+const QUOTES_LATE = {
+    nic: ["I've killed for less. Don't test me.", "You will never escape me.", "You're not leaving. I won't allow it.", "Don't you DARE try that again.", "You're mine. I don't care if you fight it.","I'll burn this entire city down before I lose you."],
+    sehee: ["I'll follow you to HELL! You're NOT escaping!", "I'd rather we BOTH DIE than let you run! :)", "Hahahaha! We're going to rot here together! Forever!", "Who are you running to?! I'll kill them too!", "CAUGHT YOU! Hah! You really thought you'd get away?","You made me so fucking mad."],
+    laure: ["Caught. You think you have a choice? How adorable.", "You will stay. Or I will make you wish you had.", "You are mine. By law, by force, by right. Accept it.", "You want to be free? I will destroy your very will to exist.", "You are PROPERTY. Do not forget what you are.","Your life outside ends today."]
+};
+const QUOTES_EXTREME = {
+    nic: ["You belong on a leash, right at my feet. Good girl.", "You compromised my patience. Now I'm going to dismantle your resistance, finger by finger.", "Target secured. Initiating punishment protocol. Strip.", "No more games. I'll pin you down and grind against you until your mind goes blank.","You think you can just LEAVE? After everything? I'm going to fuck the defiance right out of you.","On your knees. Now. Show me you know who owns you."],
+    sehee: ["Found you~! Now I get to break my favorite toy! :p", "You're mine! I'll fuck you in front of everyone! I don't care!", "Let's play a game: try not to cum while I break you! :)", "I'm so pissed off! I'm gonna fuck you until you bleed!","Hahaha! You're so wet! Did you miss me? Or are you just scared?!","I'm gonna lick you until you pass out, then wake you up and do it again!"],
+    laure: ["Dirty little stray. I'm going to fuck you until you forget your own name.", "Beg me to stop. I want to hear how desperate you can get.", "You should be grateful I'm touching you at all. Now say 'thank you, Mistress'.", "Look at you, groveling in the dirt. You need to be reminded of your place.","I'll leave you messy and used on the floor. That's all you're worth.","Je t’ai attrapée. Be a good pet and spread for me. That's it."]
+};
+const QUOTES_MERCY = {
+    nic: ["This is your one chance.", "Consider this a training exercise. Dismissed.", "I can't believe I'm doing this...","Your flank is open. I'm letting you go. Correct it.","You're lucky today. Don't push your luck.","Before I change my mind. Move."],
+    sehee: ["Ow ow ow! Fine! Go! But I'm coming after you!", "Okay okay, I let you go! But only because I'm nice!", "1, 2, 3... I'm giving you a head start!","Bye bye! Don't die out there!","Ugh, I'm bored now. You can go.","Hah! You're fast! I like it! Run, Dawnie!"],
+    laure: ["Go. I'm feeling generous today.", "You look pathetic. Go clean yourself up.", "A moment of grace. Use it wisely.","Run along, stray. The gate is open.","You may leave. Show me a better performance next time.","Freedom is a heavy burden. See if you can carry it."]
+};
+// ================================
+// 🔥 ENHANCED ENEMY THREATS
+// ================================
+
+// 🔵 Nicolette
+const ENHANCED_THREATS_NIC = [
+  "NICOLETTE: This ends now.",
+  "NICOLETTE: You are out of options.",
+  "NICOLETTE: Stop running."
+];
+
+// 🟣 Laure
+const ENHANCED_THREATS_LAURE = [
+  "LAURE: You shouldn’t walk so hastily.",
+  "LAURE: Chose your path wisely.",
+  "LAURE: It is impolite to have a lady chase you."
+];
+
+// 🔴 Sehee — 放炸彈
+const ENHANCED_THREATS_SEHEE_TRAP = [
+  "SEHEE: I prepared a gift for you:p",
+  "SEHEE: Step carefully, okay?",
+  "SEHEE: GOGOGO! Don’t miss it!"
+];
+
+// 💥 Sehee — 爆炸
+const ENHANCED_THREATS_SEHEE_BOOM = [
+  "SEHEE: BOOM! Did that hurt?",
+  "SEHEE: Oops~ too late!",
+  "SEHEE: Awww, you saw it, right?"
+];
+function randomFrom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+const VICTORY_TEXTS = {
+    // EASY MODE: 困惑與僥倖 
+    easy: {
+        title: "// ...THEY STOPPED?",
+        status: "BREATHING",
+        thought: "I don't know why. I don't care.",
+        quote: "\"Just keep moving. Don't ask questions. Just go.\"",
+        color: "#4caf50"  
+    },
+    // NORMAL MODE: 驚魂未定 -
+    normal: {
+        title: "// SHIT... I MADE IT.",
+        status: "ALIVE",
+        thought: "My hands are shaking. But I'm out.",
+        quote: "\"Don't look back. If I look back, they'll be there.\"",
+        color: "#d4a017" 
+    },
+    // HARD MODE: 劫後餘生 -
+    hard: {
+        title: "// HOW AM I STILL HERE?",
+        status: "SURVIVED",
+        thought: "They wanted to keep me. Really keep me.",
+        quote: "\"I thought... I thought I was gone for sure. Never again.\"",
+        color: "#a31621"  
+    },
+
+// HUNTER MODE: 獵人勝利
+    hunter: {
+  title: "// ...REALLY?",
+  status: "CONTROL ACHIEVED",
+  thought: "They stopped fighting. That scares me more than before...",
+  quote: "\"They followed because I made them. Not because they wanted to.\"",
+  color: "#d6b36a"
+}
+};
+
+class Entity {
+    constructor(x, y, color, type) {
+        this.gridX = x; this.gridY = y;
+        this.pixelX = x * TILE_SIZE; this.pixelY = y * TILE_SIZE;
+        this.color = color;
+        this.type = type;
+        this.dir = {x:0, y:0};
+        this.nextDir = {x:0, y:0};
+        this.moving = false;
+this.decisionCooldown = 0;
+this.targetDot = null;
+this.isAfraid = false;
+this.loopCounter = 0;
+this.lastGridPos = null;
+this.recentTiles = [];
+this.panicTimer = 0;
+this.spawnScatterTimer = 0;
+this.spawnTarget = null;
+
+        
+        // Hunter Mode 屬性
+        this.isAlly = false;
+        this.isMarked = false;
+        this.markTime = 0;
+        this.speedMultiplier = 1.0;
+this.isEnhanced = false; 
+// 🔴 Sehee Trap
+this.trapCooldown = 0;
+this.trapInterval = 600; // 約 10 秒（think 次數）
+
+        
+        // 🔵 Nicolette Execute
+this.executeCooldown = 0;
+this.executeDuration = 0;
+this.isExecuteMode = false;
+this.executeInterval = 600; // 約 10 秒（think 次數）
+
+if (this.type === "player") {
+    this.speed = 0.18;
+
+    // Hunter 狀態用（player 專屬）
+    this.hurtFlashTime = 0;
+// 🟣 Corrosion effect (player only)
+this.corrosionStack = 0;
+this.corrosionSlowTimer = 0;
+    // 如果你之後要用，也可以先放著
+    // this.isInvincible = false;
+}else {
+  // 提升基礎速度！
+  if (this.type === 'nic') this.baseSpeed = 0.13;      // 從 0.10 提升
+  else if (this.type === 'laure') this.baseSpeed = 0.12; // 從 0.09 提升
+  else this.baseSpeed = 0.14;                          // sehee 從 0.11 提升
+  
+  // 保留原本的難度乘率
+  if (difficulty === 'EASY') {
+    this.baseMultiplier = 0.55;  // EASY 原本就是 55%
+  } else if (difficulty === 'HARD') {
+    this.baseMultiplier = 1.0;   // HARD 原本就是 100%
+  } else {
+    this.baseMultiplier = 1.0;   // NORMAL 原本也是 100%
+  }
+  
+  // 初始速度（稍後會在 update() 中加上動態加速）
+  this.speed = this.baseSpeed * this.baseMultiplier;
+}
+        this.lastMove = {x:0, y:0};
+
+// 🔒 AI 決策鎖（一次進一格，只想一次）
+this.hasDecision = false;
+// 🧬 個體差異（防止群聚）
+this.personalityBias = Math.random() * 0.6 - 0.3;
+this.lastChoiceCooldown = 0;
+    }
+    
+    update() {
+    if(gameState !== 'playing') return;
+    
+    // === EASY/NORMAL/HARD 模式動態加速：基於遊戲進度 ===
+    // 只對這三個模式生效
+    if(
+  this.type !== 'player' &&
+  !hunterMode &&   // 👈 Hunter Mode 完全關掉「吃豆子加速」
+  (difficulty === 'EASY' || difficulty === 'NORMAL' || difficulty === 'HARD')
+) {
+        
+        const progress = totalDots > 0 ? (score / totalDots) : 0;
+        
+        // 動態加速倍率（疊加在原本的難度乘率上）
+        let dynamicMultiplier = 1.0;
+        
+        if (difficulty === 'EASY') {
+            // EASY：從原本的 55% 開始，逐漸加速
+            dynamicMultiplier = 1.0 + progress * 0.5;  // 55% → 82.5%
+        } else if (difficulty === 'HARD') {
+            // HARD：從原本的 100% 開始，快速加速
+            dynamicMultiplier = 1.0 + progress * 0.7;  // 100% → 170%
+        } else {
+            // NORMAL：從原本的 100% 開始，中等加速
+            dynamicMultiplier = 1.0 + progress * 0.3;  // 100% → 130%
+        }
+        
+        // 應用動態加速（基礎速度 × 原本難度乘率 × 動態加速）
+        this.speed = this.baseSpeed * this.baseMultiplier * dynamicMultiplier;
+    }
+
+        
+// === 修復：溫和的預測轉彎，防止瞬移 ===
+if (this.type === 'player') {
+
+    let progressToTarget = 0;
+    const targetPixelX = this.gridX * TILE_SIZE;
+    const targetPixelY = this.gridY * TILE_SIZE;
+
+    if (this.dir.x !== 0) {
+        const distance = Math.abs(this.pixelX - targetPixelX);
+        progressToTarget = distance / TILE_SIZE;
+    } else if (this.dir.y !== 0) {
+        const distance = Math.abs(this.pixelY - targetPixelY);
+        progressToTarget = distance / TILE_SIZE;
+    }
+
+    // 預測轉彎（只給 player）
+    if (this.nextDir.x !== 0 || this.nextDir.y !== 0) {
+        const nextX = this.gridX + this.nextDir.x;
+        const nextY = this.gridY + this.nextDir.y;
+
+        if (!isWall(nextX, nextY) && progressToTarget > 0.85) {
+            this.dir = { ...this.nextDir };
+            this.nextDir = { x: 0, y: 0 };
+            this.lastMove = { ...this.dir };
+        }
+    }
+
+    // 吃豆子（只給 player）
+    const currentKey = `${this.gridX},${this.gridY}`;
+    if (!hunterMode && dots.has(currentKey)) {
+        dots.delete(currentKey);
+        score++;
+        document.getElementById('score').innerText =
+            Math.floor((score / totalDots) * 100) + '%';
+        updateThreatLevel();
+        if (dots.size === 0) endGame(true);
+    }
+}
+        
+        const distToGridX = Math.abs(this.pixelX - this.gridX * TILE_SIZE);
+        const distToGridY = Math.abs(this.pixelY - this.gridY * TILE_SIZE);
+        
+        if(distToGridX < 2.0 && distToGridY < 2.0) {
+            this.pixelX = this.gridX * TILE_SIZE;
+            this.pixelY = this.gridY * TILE_SIZE;
+            
+            if(this.type === 'player') {
+                if(this.nextDir.x !== 0 || this.nextDir.y !== 0) {
+                    const targetX = this.gridX + this.nextDir.x;
+                    const targetY = this.gridY + this.nextDir.y;
+                    
+                    if(!isWall(targetX, targetY)) {
+                        this.dir = {...this.nextDir};
+                        this.nextDir = {x:0, y:0};
+                    }
+                }
+            }
+            
+            const nextX = this.gridX + this.dir.x;
+            const nextY = this.gridY + this.dir.y;
+            
+            if(!isWall(nextX, nextY)) {
+    this.moving = true;
+    this.gridX = nextX;
+    this.gridY = nextY;
+    this.lastMove = {...this.dir};
+
+const key = `${this.gridX},${this.gridY}`;
+this.recentTiles.push(key);
+if (this.recentTiles.length > 8) this.recentTiles.shift();
+
+    // 🔓 進入新格子後，允許 AI 再次思考
+    this.hasDecision = false;
+
+const posKey = `${this.gridX},${this.gridY}`;
+
+// ✅ 只有「真的進入新格子」才留腐蝕
+if (this.lastGridPos !== posKey) {
+
+    // 🟣 Laure corrosion — once per tile
+    if (
+        hunterMode &&
+        this.isEnhanced &&
+        this.type === 'laure'
+    ) {
+        if (!isWall(this.gridX, this.gridY)) {
+            corrosionTiles.set(posKey, {
+                expireTime: Date.now() + (2500 + corruptionLevel * 1000)
+            });
+if (!laureSubtitleShown) {
+    showThreatSubtitle(
+   randomFrom(ENHANCED_THREATS_LAURE),
+
+    2200,
+    "rgba(80,40,120,0.35)"
+);
+    laureSubtitleShown = true;
+}
+        }
+    }
+
+    this.loopCounter = 0;
+} else {
+    this.loopCounter++;
+}
+
+this.lastGridPos = posKey;
+}else {
+    this.moving = false;
+}
+        }
+        
+        if (this.moving) {
+    const spd = this.speed * (this.speedMultiplier || 1);
+
+    const targetX = this.gridX * TILE_SIZE;
+    const targetY = this.gridY * TILE_SIZE;
+
+    const step = TILE_SIZE * spd;
+
+this.pixelX = Math.abs(targetX - this.pixelX) < step
+    ? targetX
+    : this.pixelX + this.dir.x * step;
+
+this.pixelY = Math.abs(targetY - this.pixelY) < step
+    ? targetY
+    : this.pixelY + this.dir.y * step;
+
+    // 🩹 防止 overshoot（關鍵止血）
+    if (
+        (this.dir.x !== 0 &&
+         Math.sign(targetX - this.pixelX) !== Math.sign(this.dir.x)) ||
+        (this.dir.y !== 0 &&
+         Math.sign(targetY - this.pixelY) !== Math.sign(this.dir.y))
+    ) {
+        this.pixelX = targetX;
+        this.pixelY = targetY;
+        this.moving = false;
+    }
+}
+
+// 🟣 Corrosion effect on Hunter
+if (hunterMode) {
+
+    const px = Math.floor((this.pixelX + TILE_SIZE / 2) / TILE_SIZE);
+    const py = Math.floor((this.pixelY + TILE_SIZE / 2) / TILE_SIZE);
+    const key = `${px},${py}`;
+
+    if (hunterMode && this.type === 'player') {
+    
+
+if (corrosionTiles.has(key)) {
+        this.corrosionStack += 1;
+    } else {
+        this.corrosionStack = Math.max(0, this.corrosionStack - 1);
+    }
+
+    if (this.corrosionStack >= 60) {
+        this.corrosionSlowTimer = 120;
+        this.corrosionStack = 0;
+    }
+
+    if (this.corrosionSlowTimer > 0) {
+        this.corrosionSlowTimer--;
+        this.speedMultiplier = 0.6;
+    } else {
+        // ✅ 關鍵：恢復正常速度
+        this.speedMultiplier = 1.0;
+    }
+}
+    
+if (this.decisionCooldown > 0) {
+    this.decisionCooldown--;
+}
+}
+
+}
+
+    draw() {
+
+    let glowColor = this.color;
+    let glowBlur  = 0;
+    let fillColor = this.color;
+
+    // =========================
+    // 🤝 ALLY（最高優先，任何 type 都先擋）
+    // =========================
+    if (this.isAlly) {
+
+        ctx.fillStyle   = ENTITY_COLORS.ally;
+        ctx.shadowColor = "rgba(170,175,180,0.5)"; // 很淡，不像敵人
+        ctx.shadowBlur  = 7; // 或 0 = 完全沒光
+
+        ctx.fillRect(
+            this.pixelX + 3,
+            this.pixelY + 3,
+            TILE_SIZE - 6,
+            TILE_SIZE - 6
+        );
+
+        ctx.shadowBlur = 0;
+        return; // ⛔ 絕對不再往下走
+    }
+
+    // =========================
+    // 🧑 PLAYER
+    // =========================
+    if (this.type === "player") {
+
+        // 🟦 Hunter I-Frame：盟友色脈動（越來越快）
+        if (hunterMode && hunterHitCooldown > 0) {
+
+            const t = hunterHitCooldown / 120;   // 1 → 0
+            const pulseSpeed = 2 + (1 - t) * 8;
+            const pulse =
+                (Math.sin(performance.now() * 0.001 * pulseSpeed) + 1) * 0.5;
+
+            fillColor = mixColor(
+                this.color,
+                ENTITY_COLORS.ally,
+                0.4 + pulse * 0.4
+            );
+
+            glowColor = ENTITY_COLORS.ally;
+            glowBlur  = 12 + pulse * 18;
+
+        } else {
+            fillColor = this.color;
+            glowColor = "rgba(245, 235, 210, 0.6)";
+            glowBlur  = 7;
+        }
+
+    // =========================
+    // 👿 ENHANCED ENEMY
+    // =========================
+    } else if (this.isEnhanced) {
+
+        glowBlur = 14;
+
+        if (this.type === 'nic' && this.isEnhanced && this.isExecuteMode) {
+
+    const pulse =
+        (Math.sin(performance.now() * 0.001 * 6) + 1) * 0.5;
+
+    fillColor = mixColor(
+        this.color,              // ← 原本的 #4a4fb7
+        "#9fdcff",               // ← 亮藍，只拿來脈衝
+        0.35 + pulse * 0.35
+    );
+
+    glowColor = "rgba(160,220,255,0.9)";
+    glowBlur  = 12 + pulse * 18;
+} else if (this.type === "laure") {
+            glowColor = "rgba(120, 40, 180, 0.85)";
+        } else if (this.type === "sehee") {
+            glowColor = "rgba(180, 30, 30, 0.9)";
+        }
+
+    // =========================
+    // 👾 NORMAL ENEMY
+    // =========================
+    } else {
+
+        glowBlur = 7;
+
+        if (this.type === "nic") {
+            glowColor = "rgba(60, 90, 200, 0.85)";
+        } else if (this.type === "laure") {
+            glowColor = "rgba(120, 70, 160, 0.85)";
+        } else if (this.type === "sehee") {
+            glowColor = "rgba(160, 60, 120, 0.85)";
+        }
+    }
+
+    // =========================
+    // 🎨 DRAW（共用）
+    // =========================
+    ctx.fillStyle   = fillColor;
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur  = glowBlur;
+
+    ctx.fillRect(
+        this.pixelX + 3,
+        this.pixelY + 3,
+        TILE_SIZE - 6,
+        TILE_SIZE - 6
+    );
+
+    ctx.shadowBlur = 0;
+}
+
+    // ================================
+    // 🧠 普通模式 AI（原本很兇的那套）
+    // ================================
+    useNormalAI() {
+
+        if (
+            Math.abs(this.pixelX - this.gridX * TILE_SIZE) > 1.5 ||
+            Math.abs(this.pixelY - this.gridY * TILE_SIZE) > 1.5
+        ) {
+            return;
+        }
+
+        const dirs = [
+            {x:0,y:-1},
+            {x:0,y:1},
+            {x:-1,y:0},
+            {x:1,y:0}
+        ];
+
+        let valid = dirs.filter(d => !isWall(this.gridX + d.x, this.gridY + d.y));
+
+// 🔄 卡循環就允許回頭一次
+if (this.loopCounter > 4) {
+    valid = dirs.filter(d =>
+        !isWall(this.gridX + d.x, this.gridY + d.y)
+    );
+    this.loopCounter = 0;
+}
+
+        // 禁止立刻回頭（除非死路）
+        if (valid.length > 1) {
+            valid = valid.filter(d =>
+                !(d.x === -this.lastMove.x && d.y === -this.lastMove.y)
+            );
+        }
+
+        if (valid.length === 0) return;
+
+        // === 各角色特色 ===
+        if (this.type === 'nic') {
+            valid.sort((a, b) => {
+                const da =
+                    Math.abs(this.gridX + a.x - player.gridX) +
+                    Math.abs(this.gridY + a.y - player.gridY);
+                const db =
+                    Math.abs(this.gridX + b.x - player.gridX) +
+                    Math.abs(this.gridY + b.y - player.gridY);
+                return da - db;
+            });
+            this.dir = valid[0];
+
+        } else if (this.type === 'laure') {
+            const targetX = player.gridX + player.dir.x * 4;
+            const targetY = player.gridY + player.dir.y * 4;
+
+            valid.sort((a, b) => {
+                const da =
+                    Math.abs(this.gridX + a.x - targetX) +
+                    Math.abs(this.gridY + a.y - targetY);
+                const db =
+                    Math.abs(this.gridX + b.x - targetX) +
+                    Math.abs(this.gridY + b.y - targetY);
+                return da - db;
+            });
+            this.dir = valid[0];
+
+        } else if (this.type === 'sehee') {
+            if (Math.random() < 0.2) {
+                valid.sort((a, b) => {
+                    const da =
+                        Math.abs(this.gridX + a.x - player.gridX) +
+                        Math.abs(this.gridY + a.y - player.gridY);
+                    const db =
+                        Math.abs(this.gridX + b.x - player.gridX) +
+                        Math.abs(this.gridY + b.y - player.gridY);
+                    return da - db;
+                });
+                this.dir = valid[0];
+            } else {
+                this.dir = valid[Math.floor(Math.random() * valid.length)];
+            }
+        }
+
+        this.lastMove = { ...this.dir };
+        this.hasDecision = true;
+        this.decisionCooldown = 6;
+    }
+    
+  think() {
+
+    // ===== PLAYER 不需要 AI =====
+    if (this.type === 'player') return;
+
+
+// ===================================
+// 🔴 SEHEE TRAP ABILITY
+// ===================================
+if (
+    hunterMode &&
+    this.isEnhanced &&
+    this.type === 'sehee'
+) {
+    if (this.trapCooldown > 0) {
+        this.trapCooldown--;
+    } else if (!activeTrap) {
+
+        // 隨機找一個「不是牆」的格子
+        let tries = 30;
+        while (tries-- > 0) {
+            const tx = Math.floor(Math.random() * COLS);
+            const ty = Math.floor(Math.random() * ROWS);
+
+            if (!isWall(tx, ty)) {
+                activeTrap = {
+                    x: tx,
+                    y: ty,
+                    expireTime: Date.now() + (7000 - corruptionLevel * 600),
+                    triggered: false
+                };
+showThreatSubtitle(
+  randomFrom(ENHANCED_THREATS_SEHEE_TRAP),
+  1800,
+  "rgba(120,20,20,0.35)"
+);
+                break;
+            }
+        }
+
+        this.trapCooldown = this.trapInterval;
+    }
+}
+
+// ===================================
+// 🔵 NICOLETTE EXECUTE MODE
+// ===================================
+if (
+    hunterMode &&
+    this.isEnhanced &&
+    this.type === 'nic'
+) {
+    if (this.executeCooldown > 0) {
+        this.executeCooldown--;
+    } else if (!this.isExecuteMode) {
+
+        // 啟動必殺
+        this.isExecuteMode = true;
+this.executeDuration = 120;
+this.executeCooldown =
+    this.executeInterval * (1 - corruptionLevel * 0.15);
+
+showThreatSubtitle(
+    randomFrom(ENHANCED_THREATS_NIC),
+  
+    1600,
+    "rgba(40,80,120,0.35)"
+);
+    }
+
+    if (this.isExecuteMode) {
+        this.executeDuration--;
+        if (this.executeDuration <= 0) {
+            this.isExecuteMode = false;
+        }
+    }
+}
+
+// ===================================
+// 🩸 ENHANCED ENEMY：沿用正常模式 AI
+// ===================================
+if (hunterMode && this.isEnhanced) {
+    this.useNormalAI();      // ← 關鍵
+    this.speedMultiplier = 1.1;
+    return;
+}
+
+const forwardX = this.gridX + this.dir.x;
+const forwardY = this.gridY + this.dir.y;
+
+// 前面是牆 → 一定要重新選方向
+const mustTurn = isWall(forwardX, forwardY);
+
+// ❗如果還沒開始移動，允許思考（給初始推力）
+if (!hunterMode) {
+    if (
+        this.dir.x !== 0 || this.dir.y !== 0
+    ) {
+        // 不是交叉口，但前面是牆 → 一定要想
+if (
+    !isIntersection(this.gridX, this.gridY) &&
+    !mustTurn
+) {
+    return;
+}
+    }
+}
+// 🔥 加強版敵人：不使用冷卻鎖
+if (hunterMode && this.isEnhanced) {
+    this.decisionCooldown = 0;
+    this.hasDecision = false;
+}
+else if (hunterMode && this.decisionCooldown > 0 && !this.isAfraid) {
+    return;
+}
+
+    // 🔒 已經做過決策，就等走進下一格
+// ⚠️ Hunter 模式例外，允許重新判斷
+if (this.hasDecision && !hunterMode) return;
+  
+
+// 👻 HUNTER MODE - NORMAL ENEMY (STATE AI)
+// =======================================
+if (hunterMode && !this.isEnhanced && !this.isAlly) {
+
+
+
+    // 必須在格子中心
+    if (
+        Math.abs(this.pixelX - this.gridX * TILE_SIZE) > 1.5 ||
+        Math.abs(this.pixelY - this.gridY * TILE_SIZE) > 1.5
+    ) {
+        return;
+    }
+
+// 🧨 SPAWN SCATTER：開局強制分散，避免被秒吃
+if (this.spawnScatterTimer > 0) {
+    this.spawnScatterTimer--;
+
+    const dirs = [
+        {x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}
+    ];
+
+    let valid = dirs.filter(d =>
+        !isWall(this.gridX + d.x, this.gridY + d.y)
+    );
+
+    if (valid.length > 1) {
+        valid = valid.filter(d =>
+            !(d.x === -this.lastMove.x && d.y === -this.lastMove.y)
+        );
+    }
+
+// 🧯 STUCK RECOVERY：卡住太久就強制重想
+if (this.loopCounter >= 2) {
+    this.hasDecision = false;
+    this.decisionCooldown = 0;
+}
+
+    // 🚫 遠離玩家（但不是恐慌）
+    valid.sort((a, b) => {
+        const da =
+            Math.abs(this.gridX + a.x - player.gridX) +
+            Math.abs(this.gridY + a.y - player.gridY);
+        const db =
+            Math.abs(this.gridX + b.x - player.gridX) +
+            Math.abs(this.gridY + b.y - player.gridY);
+        const diff = db - da;
+if (Math.abs(diff) < 0.1) {
+    return Math.random() - 0.5; // 👈 平手時亂一下
+}
+return diff + this.personalityBias;
+    });
+
+    this.dir = valid[0];
+    this.lastMove = {...this.dir};
+    this.hasDecision = true;
+    this.decisionCooldown = 2;
+    return;
+}
+
+// 🚧 WALL ESCAPE：只要前面是牆，立刻換方向
+const fx = this.gridX + this.dir.x;
+const fy = this.gridY + this.dir.y;
+
+if (isWall(fx, fy)) {
+
+    const dirs = [
+        {x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}
+    ];
+
+    let options = dirs.filter(d =>
+        !isWall(this.gridX + d.x, this.gridY + d.y)
+    );
+
+    // 盡量不要立刻回頭
+    if (options.length > 1) {
+        options = options.filter(d =>
+            !(d.x === -this.lastMove.x && d.y === -this.lastMove.y)
+        );
+    }
+
+    if (options.length > 0) {
+        this.dir = options[Math.floor(Math.random() * options.length)];
+        this.lastMove = {...this.dir};
+        this.hasDecision = true;
+        this.decisionCooldown = 2;
+        return;
+    }
+}
+
+// 🌀 VIRTUAL INTERSECTION：直線走太久，假裝是交叉口
+if (this.loopCounter >= 3) {
+
+    const dirs = [
+        {x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}
+    ];
+
+    let options = dirs.filter(d =>
+        !isWall(this.gridX + d.x, this.gridY + d.y)
+    );
+
+    if (options.length > 1) {
+        options = options.filter(d =>
+            !(d.x === -this.lastMove.x && d.y === -this.lastMove.y)
+        );
+    }
+
+    if (options.length > 0) {
+        this.dir = options[Math.floor(Math.random() * options.length)];
+        this.lastMove = {...this.dir};
+        this.hasDecision = true;
+        this.loopCounter = 0;
+        return;
+    }
+}
+
+    const FEAR_RANGE = 999;
+
+    const distToPlayer =
+        Math.abs(this.gridX - player.gridX) +
+        Math.abs(this.gridY - player.gridY);
+
+    const dirs = [
+        {x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}
+    ];
+
+    let valid = dirs.filter(d =>
+        !isWall(this.gridX + d.x, this.gridY + d.y)
+    );
+
+    // 死路允許回頭
+    if (valid.length > 1) {
+        valid = valid.filter(d =>
+            !(d.x === -this.lastMove.x && d.y === -this.lastMove.y)
+        );
+    }
+
+    // 😨 PANIC：玩家很近（恐慌加速，有慣性）
+if (distToPlayer <= FEAR_RANGE) {
+
+    this.panicTimer = 6; // 👈 關鍵：恐慌至少持續 6 次 think
+    this.speedMultiplier = 1.2;
+
+    valid.sort((a, b) => {
+        const da =
+            Math.abs(this.gridX + a.x - player.gridX) +
+            Math.abs(this.gridY + a.y - player.gridY);
+        const db =
+            Math.abs(this.gridX + b.x - player.gridX) +
+            Math.abs(this.gridY + b.y - player.gridY);
+        const diff = db - da;
+if (Math.abs(diff) < 0.1) {
+    return Math.random() - 0.5; // 👈 平手時亂一下
+}
+return diff;
+    });
+
+    this.dir = valid[0];
+    this.lastMove = {...this.dir};
+    this.hasDecision = true;
+    this.decisionCooldown = 3;
+    return;
+}
+// 😮‍💨 冷靜下來
+if (this.panicTimer > 0) {
+    this.panicTimer--;
+    this.speedMultiplier = 1.35;
+} else {
+    this.speedMultiplier = 1.0;
+}
+    // =====================
+    // 🟡 GREED：吃豆子
+    // =====================
+    const dotDir = findNearestDotDir(this);
+    if (dotDir) {
+        this.dir = dotDir;
+        this.lastMove = {...this.dir};
+        this.hasDecision = true;
+        return;
+    }
+
+    // 🧭 WANDER：探索（討厭最近走過的地方）
+valid.sort((a, b) => {
+    const ka = `${this.gridX + a.x},${this.gridY + a.y}`;
+    const kb = `${this.gridX + b.x},${this.gridY + b.y}`;
+
+    const ra = this.recentTiles.includes(ka) ? 1 : 0;
+    const rb = this.recentTiles.includes(kb) ? 1 : 0;
+
+    return ra - rb + (Math.random() - 0.5) * 0.2;
+});
+
+this.dir = valid[0];
+this.lastMove = {...this.dir};
+this.hasDecision = true;
+return;
+}
+// ===================================
+// 🤝 HUNTER MODE - ALLY AI
+// ===================================
+if (hunterMode && this.isAlly) {
+
+    // 必須在格子中心
+    if (
+        Math.abs(this.pixelX - this.gridX * TILE_SIZE) > 1.5 ||
+        Math.abs(this.pixelY - this.gridY * TILE_SIZE) > 1.5
+    ) {
+        return;
+    }
+
+    if (enemies.length === 0) return;
+
+    let target = null;
+    let bestDist = Infinity;
+
+    enemies.forEach(e => {
+        const d =
+            Math.abs(this.gridX - e.gridX) +
+            Math.abs(this.gridY - e.gridY);
+        if (d < bestDist) {
+            bestDist = d;
+            target = e;
+        }
+    });
+
+    if (!target) return;
+
+    const dirs = [
+        {x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}
+    ];
+
+    let valid = dirs.filter(d =>
+        !isWall(this.gridX + d.x, this.gridY + d.y)
+    );
+
+    // 禁止立刻回頭（除非死路）
+    if (valid.length > 1) {
+        valid = valid.filter(d =>
+            !(d.x === -this.lastMove.x && d.y === -this.lastMove.y)
+        );
+    }
+
+    if (valid.length === 0) return;
+
+    valid.sort((a, b) => {
+        const da =
+            Math.abs(this.gridX + a.x - target.gridX) +
+            Math.abs(this.gridY + a.y - target.gridY);
+        const db =
+            Math.abs(this.gridX + b.x - target.gridX) +
+            Math.abs(this.gridY + b.y - target.gridY);
+        return da - db;
+    });
+
+    this.dir = valid[0];
+    this.lastMove = {...this.dir};
+    this.hasDecision = true;
+    this.decisionCooldown = 4;
+    return;
+}
+
+
+    
+    if (!hunterMode) {    
+        
+// ===== 標準AI邏輯（非Hunter模式或盟友）=====
+        if (Math.abs(this.pixelX - this.gridX*TILE_SIZE) < 2.0 && 
+            Math.abs(this.pixelY - this.gridY*TILE_SIZE) < 2.0) {
+            
+            const dirs = [{x:0,y:-1}, {x:0,y:1}, {x:-1,y:0}, {x:1,y:0}];
+            let valid = dirs.filter(d => !isWall(this.gridX + d.x, this.gridY + d.y));
+// 🔄 卡循環就允許回頭一次
+if (this.loopCounter > 4) {
+    valid = dirs.filter(d => !isWall(this.gridX + d.x, this.gridY + d.y));
+    this.loopCounter = 0;
+}
+            
+            // 避免180度轉彎
+            if (valid.length > 1) {
+                valid = valid.filter(d => !(d.x === -this.lastMove.x && d.y === -this.lastMove.y));
+            }
+            
+            if(valid.length === 0) {
+                valid = dirs.filter(d => !isWall(this.gridX + d.x, this.gridY + d.y));
+            }
+            if(valid.length === 0) return;
+            
+            // 標準AI邏輯
+            if(this.type === 'nic') {
+                valid.sort((a, b) => {
+                    const distA = Math.abs((this.gridX + a.x) - player.gridX) + Math.abs((this.gridY + a.y) - player.gridY);
+                    const distB = Math.abs((this.gridX + b.x) - player.gridX) + Math.abs((this.gridY + b.y) - player.gridY);
+                    return distA - distB;
+                });
+                this.dir = valid[0];
+            } else if(this.type === 'laure') {
+                const targetX = player.gridX + (player.dir.x * 4);
+                const targetY = player.gridY + (player.dir.y * 4);
+                valid.sort((a, b) => {
+                    const distA = Math.abs((this.gridX + a.x) - targetX) + Math.abs((this.gridY + a.y) - targetY);
+                    const distB = Math.abs((this.gridX + b.x) - targetX) + Math.abs((this.gridY + b.y) - targetY);
+                    return distA - distB;
+                });
+                this.dir = valid[0];
+            } else if(this.type === 'sehee') {
+                if(Math.random() < 0.2) {
+                    valid.sort((a, b) => {
+                        const distA = Math.abs((this.gridX + a.x) - player.gridX) + Math.abs((this.gridY + a.y) - player.gridY);
+                        const distB = Math.abs((this.gridX + b.x) - player.gridX) + Math.abs((this.gridY + b.y) - player.gridY);
+                        return distA - distB;
+                    });
+                    this.dir = valid[0];
+                } else {
+                    this.dir = valid[Math.floor(Math.random() * valid.length)];
+                }
+            }
+            this.lastMove = { ...this.dir };
+        }
+    }
+}
+}
+let player;
+let enemies = [];
+let hunterPlayedOnce = false;   // 是否結束過 Hunter（輸贏都算）
+let infoStage = 0;              // 0=基礎, 1=進階（已解鎖）
+let hunterInfoViewed = false;
+
+// ======================
+// 💬 Threat Subtitle UI
+// ======================
+let threatSubtitle = null;
+let threatSubtitleTint = "rgba(0,0,0,0.35)";
+// { text, startTime, duration }
+
+function showThreatSubtitle(text, duration = 1800, tint = null) {
+    threatSubtitle = {
+        text,
+        startTime: performance.now(),
+        duration
+    };
+
+    if (tint) {
+        threatSubtitleTint = tint;
+    } else {
+        threatSubtitleTint = "rgba(0,0,0,0.35)";
+    }
+}
+
+let laureSubtitleShown = false;
+let trapFlashTime = 0;
+let unknownThreat = false;
+
+function isWall(x, y) {
+    if(x<0 || x>=COLS || y<0 || y>=ROWS) return true;
+    return map[y][x] === 1;
+}
+
+function findNearestDotDir(entity) {
+    let best = null;
+    let bestDist = Infinity;
+
+    dots.forEach(k => {
+        const [x, y] = k.split(',').map(Number);
+        const d = Math.abs(entity.gridX - x) + Math.abs(entity.gridY - y);
+        if (d < bestDist) {
+            bestDist = d;
+            best = {x, y};
+        }
+    });
+
+    if (!best) return null;
+
+    const dirs = [{x:0,y:-1}, {x:0,y:1}, {x:-1,y:0}, {x:1,y:0}];
+    let valid = dirs.filter(d => {
+        const nx = entity.gridX + d.x;
+        const ny = entity.gridY + d.y;
+        return !isWall(nx, ny);
+    });
+
+// 🔄 卡循環就允許回頭一次
+if (entity.loopCounter > 4) {
+    valid = dirs.filter(d =>
+        !isWall(entity.gridX + d.x, entity.gridY + d.y)
+    );
+    entity.loopCounter = 0;
+}
+    if (valid.length === 0) return null;
+
+    valid.sort((a, b) => {
+        const da = Math.abs((entity.gridX+a.x) - best.x) +
+                   Math.abs((entity.gridY+a.y) - best.y);
+        const db = Math.abs((entity.gridX+b.x) - best.x) +
+                   Math.abs((entity.gridY+b.y) - best.y);
+        return (da - db) + (entity.personalityBias || 0);
+    });
+
+    return valid[0];
+}
+
+function updateThreatLevel() {
+const livesEl = document.getElementById('hunterLivesUI');
+    const threatSpan = document.getElementById('threatLevel');
+
+// 🔄 reset threat style first
+// 每次更新前清掉
+threatSpan.style.fontSize = "1em";
+threatSpan.style.textShadow = "none";
+threatSpan.style.letterSpacing = "normal";
+threatSpan.style.color = "var(--color-warn-gray)";
+
+
+if (hunterMode && unknownThreat) {
+    threatSpan.innerText = "???";
+    threatSpan.style.color = "var(--color-danger-blood)";
+threatSpan.style.fontSize = "1.4em";
+threatSpan.style.textShadow = `
+    0 0 6px rgba(180,40,40,0.6),
+    0 0 12px rgba(180,40,40,0.4)
+`;
+    
+    threatSpan.style.fontWeight = "normal";
+
+    const pulse =
+        (Math.sin(performance.now() * 0.002) + 1) * 0.5;
+    threatSpan.style.opacity = 0.7 + pulse * 0.3;
+
+    // ❤️ 顯示生命
+    livesEl.classList.remove('hidden');
+    livesEl.innerText = `LIVES: ${hunterLives}`;
+
+    return;
+}
+
+livesEl.classList.add('hidden');
+    
+    if (difficulty === 'HARD') {
+        threatSpan.innerText = "CRITICAL";
+        threatSpan.style.color = "var(--color-danger-blood)";
+threatSpan.style.textShadow = `
+    0 0 6px rgba(180,40,40,0.6),
+    0 0 12px rgba(180,40,40,0.4)
+`;
+        threatSpan.style.fontWeight = "normal";
+        return;
+    }
+
+    const ratio = totalDots > 0 ? (score / totalDots) : 0;
+    if (ratio >= 0.5) {
+        threatSpan.innerText = "CRITICAL";
+        threatSpan.style.color = "var(--color-danger-blood)";
+threatSpan.style.textShadow = `
+    0 0 6px rgba(180,40,40,0.6),
+    0 0 12px rgba(180,40,40,0.4)
+`;
+        threatSpan.style.fontWeight = "normal";
+    } else if (ratio >= 0.33) {
+        threatSpan.innerText = "ESCALATING";
+        threatSpan.style.color = "var(--color-obsess-orange)";
+threatSpan.style.textShadow = `
+    0 0 6px rgba(180,40,40,0.6),
+    0 0 12px rgba(180,40,40,0.4)
+`;
+        threatSpan.style.fontWeight = "normal";
+    } else {
+        threatSpan.innerText = "LOW";
+        threatSpan.style.color = "var(--color-warn-gray)";
+        threatSpan.style.fontWeight = "normal";
+    }
+}
+
+function updateInfoUI() {
+  // 先全部關掉（最安全）
+  infoToggle.classList.remove(
+    'info-pulse-strong',
+    'info-pulse-soft',
+    'info-disabled'
+  );
+
+  // ❌ Hunter 沒解鎖 or 不在 Hunter 模式 → 直接隱藏
+  if (!hunterUnlocked || !hunterMode) {
+    infoToggle.classList.add('hidden');
+    return;
+  }
+
+  // ✅ Hunter 模式才顯示
+  infoToggle.classList.remove('hidden');
+
+  // 遊戲中 → 灰掉
+  if (gameState === 'playing') {
+    infoToggle.classList.add('info-disabled');
+    return;
+  }
+
+  // 根據等級發光
+  if (infoStage === 0) {
+  infoToggle.classList.add('info-pulse-strong');
+} else if (infoStage === 1) {
+  infoToggle.classList.add('info-pulse-soft');
+}
+}
+
+function resetUI() {
+    score = 0;
+    document.getElementById('score').innerText = '0%';
+    
+
+
+
+    unknownThreat = false;   // ✅ 關鍵：模式切換就清掉 ???
+
+    updateThreatLevel();
+
+const msgEl = document.getElementById('deathMsg');
+const titleEl = document.getElementById('gameOverTitle');
+
+msgEl.style.color = "";
+msgEl.style.borderLeftColor = "";
+msgEl.style.textShadow = "";
+
+titleEl.style.color = "";
+
+    document.getElementById('startScreen').classList.remove('hidden');
+    document.getElementById('gameOverScreen').classList.add('hidden');
+    document.getElementById('winScreen').classList.add('hidden');
+    document.getElementById('mercyScreen').classList.add('hidden');
+    document.getElementById('mainHeader').classList.remove('header-locked');
+    
+    if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
+    gameState = 'ready';
+    keys = {};
+updateInfoUI();
+
+}
+
+function initGame() {
+    if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
+    const size = document.getElementById('gameArea').clientWidth;
+    canvas.width = size; canvas.height = size;
+    TILE_SIZE = size / COLS;
+    
+    document.getElementById('mainHeader').classList.remove('header-locked');
+    
+    map = MAPS[currentMapIdx]; 
+    dots.clear();
+    for(let y=0; y<ROWS; y++) for(let x=0; x<COLS; x++) if(map[y][x] === 0) dots.add(`${x},${y}`);
+    totalDots = dots.size;
+    
+    player = new Entity(1, 1, COLORS.dawn, 'player');
+    enemies = [
+        new Entity(COLS-2, 1, COLORS.nic, 'nic'),
+        new Entity(1, ROWS-2, COLORS.laure, 'laure'),
+        new Entity(COLS-2, ROWS-2, COLORS.sehee, 'sehee')
+    ];
+
+// === Ensure enemies start as NORMAL ===
+enemies.forEach(e => {
+    e.isEnhanced = false;
+});
+
+enemies.forEach(e => {
+    e.spawnScatterTimer = 40; // 約前 40 次 think 強制分散
+});
+
+enemies.forEach(e => {
+    e.personalityBias = Math.random() * 2 - 1; // 強一點
+});
+
+    hunterAllies = [];
+    
+    score = 0;
+    mercyUsed = false; 
+    
+
+    // === Reset Hunter Lives ===
+    if (hunterMode) {
+        hunterLives = 3;
+
+        hunterHitCooldown = 0;
+    }
+    document.getElementById('score').innerText = '0%';
+    updateThreatLevel();
+    gameState = 'playing';
+updateInfoUI();
+// 🧹 Reset Hunter environmental effects
+corrosionTiles.clear();
+activeTrap = null;
+unknownThreat = false;   // ✅ 重置 ??? 狀態
+
+    // === Hunter Survival Time Init ===
+    if (hunterMode) {
+        hunterStartTime = Date.now();
+        hunterSurviveTime = 0;
+    }
+    keys = {};
+    gameLoop();
+}
+
+function triggerMercy(enemy) {
+    gameState = 'paused';
+    const msgEl = document.getElementById('mercyMsg');
+    const quotes = QUOTES_MERCY[enemy.type];
+    
+    const nameMap = { 'nic': 'NICOLETTE', 'sehee': 'SEHEE', 'laure': 'LAURE' };
+    const displayName = nameMap[enemy.type] || enemy.type.toUpperCase();
+    
+    msgEl.innerText = `${displayName}: ${quotes[Math.floor(Math.random() * quotes.length)]}`;
+    
+    document.getElementById('mainHeader').classList.add('header-locked');
+    document.getElementById('mercyScreen').classList.remove('hidden');
+    mercyUsed = true;
+    
+    player.gridX = 1; player.gridY = 1;
+    player.pixelX = TILE_SIZE; player.pixelY = TILE_SIZE;
+    player.dir = {x:0, y:0}; player.nextDir = {x:0, y:0};
+    keys = {};
+}
+
+function gameLoop() {
+    if(gameState !== 'playing') {
+       if(animationId) { cancelAnimationFrame(animationId); animationId = null; }
+       return;
+    }
+    // === Update Hunter Survival Time ===
+    if (hunterMode) {
+        hunterSurviveTime = Date.now() - hunterStartTime;
+    }
+if (hunterMode && hunterHitCooldown > 0) {
+    hunterHitCooldown--;
+}
+    
+    
+if(player) {
+        if(player.gridX < 0 || player.gridX >= COLS || 
+           player.gridY < 0 || player.gridY >= ROWS) {
+            player.gridX = Math.max(1, Math.min(COLS-2, player.gridX));
+            player.gridY = Math.max(1, Math.min(ROWS-2, player.gridY));
+            player.pixelX = player.gridX * TILE_SIZE;
+            player.pixelY = player.gridY * TILE_SIZE;
+            player.dir = {x:0, y:0};
+            player.nextDir = {x:0, y:0};
+        }
+        
+        if(isWall(player.gridX, player.gridY)) {
+            for(let radius = 1; radius <= 3; radius++) {
+                for(let dx = -radius; dx <= radius; dx++) {
+                    for(let dy = -radius; dy <= radius; dy++) {
+                        const testX = player.gridX + dx;
+                        const testY = player.gridY + dy;
+                        if(!isWall(testX, testY)) {
+                            player.gridX = testX;
+                            player.gridY = testY;
+                            player.pixelX = player.gridX * TILE_SIZE;
+                            player.pixelY = player.gridY * TILE_SIZE;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    ctx.fillStyle = COLORS.wall; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+if (trapFlashTime > 0) {
+    ctx.fillStyle = "rgba(180,30,30,0.25)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    trapFlashTime--;
+}
+    
+    for(let y=0; y<ROWS; y++) for(let x=0; x<COLS; x++) {
+        if(map[y][x] === 1) { 
+            ctx.strokeStyle = COLORS.wallBorder; 
+            ctx.lineWidth = 1; 
+            ctx.strokeRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE); 
+        } else if(dots.has(`${x},${y}`)) { 
+            ctx.fillStyle = COLORS.dot; 
+            ctx.fillRect(x*TILE_SIZE + TILE_SIZE/2 -2, y*TILE_SIZE + TILE_SIZE/2 -2, 4, 4); 
+        }
+    }
+// ===============================
+// 💬 THREAT SUBTITLE (MAP WALL)
+// ===============================
+if (threatSubtitle) {
+    const now = performance.now();
+    const elapsed = now - threatSubtitle.startTime;
+
+    if (elapsed > threatSubtitle.duration) {
+        threatSubtitle = null;
+    } else {
+        const fade =
+            elapsed < 200
+                ? elapsed / 200
+                : elapsed > threatSubtitle.duration - 300
+                    ? (threatSubtitle.duration - elapsed) / 300
+                    : 1;
+
+        const y =
+            (ROWS - 1) * TILE_SIZE + TILE_SIZE / 2;
+
+        ctx.save();
+        ctx.globalAlpha = 0.75 * fade;
+
+        ctx.fillStyle = threatSubtitleTint;
+        ctx.fillRect(
+            0,
+            y - TILE_SIZE * 0.45,
+            canvas.width,
+            TILE_SIZE * 0.9
+        );
+
+        ctx.fillStyle = "#cfcfcf";
+        ctx.font = `${TILE_SIZE * 0.6}px Share Tech Mono`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.fillText(
+            threatSubtitle.text,
+            canvas.width / 2,
+            y
+        );
+
+        ctx.restore();
+    }
+}
+
+// ======================
+// 🟣 DRAW CORROSION TILES
+// ======================
+const now = Date.now();
+
+corrosionTiles.forEach((data, key) => {
+    if (now > data.expireTime) {
+        corrosionTiles.delete(key);
+        return;
+    }
+
+    const [x, y] = key.split(',').map(Number);
+    const remain = (data.expireTime - now) / 2500;
+
+    ctx.fillStyle = `rgba(140, 60, 180, ${0.25 + remain * 0.25})`;
+    ctx.fillRect(
+        x * TILE_SIZE + 2,
+        y * TILE_SIZE + 2,
+        TILE_SIZE - 4,
+        TILE_SIZE - 4
+    );
+});
+
+// ======================
+// 🔴 DRAW TRAP
+// ======================
+if (activeTrap) {
+    const remaining =
+        Math.max(0, Math.ceil((activeTrap.expireTime - Date.now()) / 1000));
+
+    ctx.fillStyle = "rgba(180,30,30,0.6)";
+    ctx.fillRect(
+        activeTrap.x * TILE_SIZE + 4,
+        activeTrap.y * TILE_SIZE + 4,
+        TILE_SIZE - 8,
+        TILE_SIZE - 8
+    );
+
+    ctx.fillStyle = "#fff";
+    ctx.font = `${TILE_SIZE / 2}px monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+        remaining,
+        activeTrap.x * TILE_SIZE + TILE_SIZE / 2,
+        activeTrap.y * TILE_SIZE + TILE_SIZE / 2
+    );
+}
+    
+    player.update(); 
+    player.draw();
+
+// ======================
+// 🔴 TRAP CHECK
+// ======================
+if (hunterMode && activeTrap) {
+
+    // 玩家踩到陷阱 → 安全解除
+    if (
+        player.gridX === activeTrap.x &&
+        player.gridY === activeTrap.y
+    ) {
+        activeTrap = null;
+    }
+
+    // 倒數結束但沒踩 → 扣命
+    else if (Date.now() > activeTrap.expireTime) {
+    hunterLives--;
+updateThreatLevel();
+
+    trapFlashTime = 15; // 🔥 畫面紅閃 15 幀
+
+    showThreatSubtitle(
+  randomFrom(ENHANCED_THREATS_SEHEE_BOOM),
+  1600,
+  "rgba(160,40,40,0.45)"
+);
+
+    activeTrap = null;
+
+    if (hunterLives <= 0) {
+        endGame(false, "TRAPPED", "late");
+        return;
+    }
+}
+}
+    
+    enemies.forEach(e => {
+        e.think();
+        e.update();
+        e.draw();
+
+
+        // === HUNTER MODE: only NORMAL enemies eat dots ===
+if (hunterMode && !e.isEnhanced) {
+    const k = `${e.gridX},${e.gridY}`;
+    if (dots.has(k)) {
+        dots.delete(k);
+        const eaten = totalDots - dots.size;
+        document.getElementById('score').innerText =
+            Math.floor((eaten / totalDots) * 100) + '%';
+    }
+}
+// 🟡 Corruption Level (dot-based)
+if (hunterMode) {
+    const ratio = totalDots > 0
+        ? (totalDots - dots.size) / totalDots
+        : 0;
+
+    let newLevel = 0;
+    if (ratio >= 0.9) newLevel = 3;
+    else if (ratio >= 0.75) newLevel = 2;
+    else if (ratio >= 0.5) newLevel = 1;
+
+    corruptionLevel = newLevel;
+}
+
+        const dist = Math.hypot(player.pixelX - e.pixelX, player.pixelY - e.pixelY);
+
+        if (dist < TILE_SIZE / 1.5) {
+// ☠️ Nicolette Execute = instant death
+if (
+    hunterMode &&
+    e.type === 'nic' &&
+    e.isEnhanced &&
+    e.isExecuteMode
+) {
+    endGame(false, "EXECUTED", "extreme");
+    return;
+}
+
+// === HUNTER MODE: Player gets hit by ENHANCED enemy ONLY ===
+if (hunterMode && e.isEnhanced && hunterHitCooldown <= 0) {
+    hunterLives--;
+canvas.style.filter = 'brightness(0.85)';
+setTimeout(() => {
+    canvas.style.filter = 'none';
+}, 150);
+updateThreatLevel();
+    hunterHitCooldown = 180; // 約3 秒
+player.hurtFlashTime =performance.now();
+console.log(`💥 Hit by ENHANCED ${e.type}! Lives left: ${hunterLives}`);
+
+    if (hunterLives <= 0) {
+        endGame(false, "HUNTED DOWN", "late");
+        return;
+    }
+
+    return; // 吃到傷害後，不再執行其他判定
+}
+           // 🏹 HUNTER MODE: Mark NORMAL enemies only
+if (hunterMode && !e.isAlly && !e.isEnhanced && !e.isMarked) {
+    e.isMarked = true;
+    e.markTime = Date.now();
+    console.log(`🎯 標記普通敵人 ${e.type}`);
+    return;
+}
+
+            // ===== 原本死亡 / mercy 邏輯（非Hunter模式）=====
+            if (!hunterMode) {  // 只在非Hunter模式執行
+                if (difficulty === 'EASY' && !mercyUsed) {
+                    triggerMercy(e);
+                    return;
+                }
+
+                const ratio = score / totalDots;
+                let quotesList, styleType;
+
+                if (difficulty === 'HARD') {
+                    quotesList = QUOTES_EXTREME[e.type];
+                    styleType = 'extreme';
+                } else if (ratio >= 0.5) {
+                    quotesList = QUOTES_LATE[e.type];
+                    styleType = 'late';
+                } else if (ratio >= 0.33) {
+                    quotesList = QUOTES_MID[e.type];
+                    styleType = 'mid';
+                } else {
+                    quotesList = QUOTES_EARLY[e.type];
+                    styleType = 'early';
+                }
+
+                const randomQuote = quotesList[Math.floor(Math.random() * quotesList.length)];
+                const name = e.type === 'nic' ? 'NICOLETTE' : e.type === 'sehee' ? 'SEHEE' : 'LAURE';
+
+                endGame(false, `${name}: ${randomQuote}`, styleType);
+            }
+        }
+    });
+
+// ===== HUNTER MODE: update & draw allies =====
+if (hunterMode) {
+    hunterAllies.forEach(a => {
+        a.think();
+        a.update();
+        a.draw();
+// 🤝 Ally marks NORMAL enemies only
+enemies.forEach(e => {
+    const dist = Math.hypot(a.pixelX - e.pixelX, a.pixelY - e.pixelY);
+    if (
+        dist < TILE_SIZE / 1.5 &&
+        !e.isMarked &&
+        !e.isEnhanced &&
+        !e.isAlly
+    ) {
+        e.isMarked = true;
+        e.markTime = Date.now();
+        console.log(`🤝 Ally marked normal enemy ${e.type}`);
+    }
+});
+    });
+}
+
+// ===== HUNTER MODE: Ally rebellion (5s) =====
+if (hunterMode && hunterAllies.length > 0) {
+    const now = Date.now();
+
+    for (let i = hunterAllies.length - 1; i >= 0; i--) {
+        const a = hunterAllies[i];
+
+        if (now - a.allyStartTime >= 3000) {
+            // 💔 Ally turns ENHANCED enemy
+            a.isAlly = false;
+            a.isEnhanced = true;
+if (!unknownThreat) {
+    unknownThreat = true;
+    updateThreatLevel(); // 🔥 強制刷新 UI
+}
+            a.color = ENTITY_COLORS.enhanced[a.type] || "#ff0000";
+            a.speedMultiplier = 1.0;
+
+            // 移出盟友
+            hunterAllies.splice(i, 1);
+
+            // 加回敵人列表
+            enemies.push(a);
+
+            console.log(`⚠️ Ally ${a.type} rebelled → ENHANCED`);
+        }
+    }
+}
+
+    if (hunterMode) {
+        const now = Date.now();
+        const newlyConverted = enemies.filter(e => 
+            e.isMarked && !e.isAlly && now - e.markTime > 500
+        );
+
+        if (newlyConverted.length > 0) {
+            newlyConverted.forEach(e => {
+    e.isMarked = false;
+    e.isAlly = true;
+    e.isEnhanced = false;
+
+e.allyStartTime = Date.now();
+
+    e.color = ENTITY_COLORS.ally;
+e.speedMultiplier = 1.0; // 恢復原速
+
+    // 🤝 盟友變慢
+    e.speedMultiplier = 0.5;
+
+    hunterAllies.push(e);
+});
+
+            enemies = enemies.filter(e => !e.isAlly);
+
+            if (enemies.length === 0) {
+                endGame(true);
+            }
+        }
+
+        if (dots.size === 0 && enemies.length > 0) {
+            endGame(false, "ALL DOTS CONSUMED", "late");
+        }
+    }
+
+    animationId = requestAnimationFrame(gameLoop);
+}
+
+function isIntersection(x, y) {
+    let count = 0;
+    if (!isWall(x+1,y)) count++;
+    if (!isWall(x-1,y)) count++;
+    if (!isWall(x,y+1)) count++;
+    if (!isWall(x,y-1)) count++;
+    return count >= 3;
+}
+
+function endGame(win, msg, styleType) {
+    gameState = win ? 'win' : 'gameover';
+// ✅ 只要 Hunter 模式結束（不管輸贏），就算體驗過
+if (difficulty === 'HUNTER') {
+    hunterPlayedOnce = true;
+infoStage = 1;
+infoSeen = false; // 🔥 強制重新提示
+  triggerInfoAlert();
+}
+    if(animationId) { cancelAnimationFrame(animationId); animationId = null; }
+    if(win) {
+       if (!hunterUnlocked && 
+   (difficulty === 'EASY' || difficulty === 'NORMAL' || difficulty === 'HARD')) {
+    hunterUnlocked = true;
+    showHunterToast();
+}
+        
+        let victory;
+        if (difficulty === 'EASY') {
+            victory = VICTORY_TEXTS.easy;
+        } else if (difficulty === 'HARD') {
+            victory = VICTORY_TEXTS.hard;
+        } else if (difficulty === 'HUNTER') {
+            victory = VICTORY_TEXTS.hunter; // 新增 Hunter Mode 勝利
+        } else {
+            victory = VICTORY_TEXTS.normal;
+        }
+        
+        
+        
+        const winScreen = document.getElementById('winScreen');
+        const titleEl = winScreen.querySelector('h2');
+        const contentEl = winScreen.querySelector('div');
+        
+        titleEl.textContent = victory.title;
+        titleEl.style.color = victory.color;
+        
+        contentEl.innerHTML = `
+            > STATUS: ${victory.status}<br>
+            > THOUGHT: ${victory.thought}<br>
+            <br>
+            <span style="color:${victory.color}; font-style:italic;">${victory.quote}</span>
+        `;
+        
+        winScreen.classList.remove('hidden');
+        
+    } else {
+        const msgEl = document.getElementById('deathMsg');
+        const titleEl = document.getElementById('gameOverTitle');
+// ============================
+// 🧨 HUNTER MODE – GLITCH DEATH
+// ============================
+if (hunterMode) {
+    const screen = document.getElementById('gameOverScreen');
+
+    let glitchTimer = setInterval(() => {
+        const dx = (Math.random() - 0.5) * 4;
+        const dy = (Math.random() - 0.5) * 4;
+
+        screen.style.transform = `translate(${dx}px, ${dy}px)`;
+        screen.style.textShadow = `
+            2px 0 rgba(255,0,0,0.6),
+           -2px 0 rgba(0,255,255,0.6)
+        `;
+    }, 50);
+
+    setTimeout(() => {
+        clearInterval(glitchTimer);
+        screen.style.transform = 'none';
+        screen.style.textShadow = 'none';
+    }, 1200);
+}
+        if (hunterMode) {
+    const seconds = (hunterSurviveTime / 1000).toFixed(1);
+    msgEl.innerText = `YOU SURVIVED ${seconds}s\n\n${msg || ''}`;
+
+    // 🔥 Hunter death visual
+    msgEl.style.color = "var(--color-danger-blood)";
+    msgEl.style.borderLeftColor = "var(--color-danger-blood)";
+    msgEl.style.textShadow =
+        "0 0 6px rgba(255,40,40,0.6), 0 0 12px rgba(255,0,0,0.4)";
+
+    titleEl.innerText = "// HUNT FAILED";
+    titleEl.style.color = "var(--color-danger-blood)";
+} else {
+    msgEl.innerText = msg;
+}
+        
+        msgEl.style.textShadow = "none";
+        titleEl.style.textShadow = "none";
+        
+        if (styleType === 'extreme') {
+          msgEl.style.color = "#cc2222"; 
+          msgEl.style.borderLeftColor = "#cc2222"; 
+          titleEl.innerText = "// FINALITY REACHED"; 
+          titleEl.style.color = "#cc2222";
+        } else if (styleType === 'late') {
+          msgEl.style.color = "var(--color-danger-blood)"; 
+          msgEl.style.borderLeftColor = "var(--color-danger-blood)"; 
+          titleEl.innerText = "// OWNERSHIP ESTABLISHED"; 
+          titleEl.style.color = "var(--color-danger-blood)";
+        } else if (styleType === 'mid') {
+          msgEl.style.color = "var(--color-obsess-orange)"; 
+          msgEl.style.borderLeftColor = "var(--color-obsess-orange)"; 
+          titleEl.innerText = "// TARGET LOCKED"; 
+          titleEl.style.color = "var(--color-obsess-orange)";
+        } else {
+          msgEl.style.color = "var(--color-warn-gray)"; 
+          msgEl.style.borderLeftColor = "var(--color-warn-gray)"; 
+          titleEl.innerText = "// TARGET SECURED"; 
+          titleEl.style.color = "#555";
+        }
+        document.getElementById('gameOverScreen').classList.remove('hidden');
+gameOverScreen.classList.add('hunter-death');
+    }
+updateInfoUI();
+}
+
+document.getElementById('mapToggle').addEventListener('click', () => {
+    currentMapIdx = (currentMapIdx + 1) % 3;
+    document.getElementById('mapToggle').innerText = `[MAP: 0${currentMapIdx + 1}]`;
+    document.getElementById('mapText').innerText = `[MAP: ${mapNames[currentMapIdx]}]`;
+    resetUI(); 
+});
+
+infoToggle.addEventListener('click', () => {
+  if (gameState === 'playing') return;
+
+// ⭐ 顯示用的 stage（不一定等於 infoStage）
+  let displayStage = infoStage;
+
+  // ✅ 只要完成過 Hunter，就直接顯示完整版
+  if (hunterPlayedOnce && infoStage >= 1) {
+    displayStage = 2;
+  }
+
+  
+
+  infoContent.innerText = INFO_TEXT[displayStage];
+  infoOverlay.classList.remove('hidden');
+});
+
+const closeInfo = () => {
+  infoOverlay.classList.add('hidden');
+
+  // ✅ 已經完成過 Hunter，且目前是進階階段
+  if (hunterPlayedOnce && infoStage === 1) {
+    infoStage = 2;
+  }
+
+  updateInfoUI();
+};
+
+infoCloseBtn.addEventListener('click', closeInfo);
+infoCloseBtn.addEventListener('pointerup', closeInfo);
+
+document.getElementById('diffToggle').addEventListener('click', () => {
+    const toggleEl = document.getElementById('diffToggle');
+    const modeTextEl = document.getElementById('modeText');
+    const warnTextEl = document.getElementById('warnText');
+
+    if (difficulty === 'NORMAL') {
+        difficulty = 'EASY';
+        hunterMode = false;
+        toggleEl.innerText = "[MODE: EASY]";
+        toggleEl.style.color = "var(--color-safe-green)";
+        modeTextEl.innerText = "[CURRENT: MERCY PROTOCOL ACTIVE]";
+        modeTextEl.style.color = "var(--color-safe-green)";
+        warnTextEl.innerText = "RUN DAWN RUN.";
+    } else if (difficulty === 'EASY') {
+        difficulty = 'HARD';
+        hunterMode = false;
+        toggleEl.innerText = "[MODE: HARD]";
+        toggleEl.style.color = "var(--color-danger-blood)";
+        modeTextEl.innerText = "[CURRENT: DEATHWISH PROTOCOL]";
+        modeTextEl.style.color = "var(--color-danger-blood)";
+        warnTextEl.innerText = "ESCAPE IS IMPOSSIBLE.(NSFW)";
+    } else if (difficulty === 'HARD' && hunterUnlocked) {
+        difficulty = 'HUNTER';
+        hunterMode = true;
+        toggleEl.innerText = "[MODE: HUNTER]";
+        toggleEl.style.color = "#d6b36a";
+        modeTextEl.innerText = "[CURRENT: HUNTER PROTOCOL]";
+        modeTextEl.style.color = "#d6b36a";
+        warnTextEl.innerText = "YOU ARE THE PREDATOR.";
+    } else {
+        difficulty = 'NORMAL';
+        hunterMode = false;
+        toggleEl.innerText = "[MODE: NORMAL]";
+        toggleEl.style.color = "var(--color-warn-gray)";
+        modeTextEl.innerText = "[CURRENT: STANDARD PROTOCOL]";
+        modeTextEl.style.color = "#aaa";
+        warnTextEl.innerText = "DO NOT LET THEM CATCH YOU.";
+    }
+
+    resetUI();
+});
+
+window.addEventListener('keydown', e => { 
+    if(gameState !== 'playing') return; 
+    
+    const validKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 
+                      'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'];
+    
+    if(validKeys.includes(e.key)) {
+        e.preventDefault();
+        keys[e.key] = true;
+        
+        switch(e.key.toLowerCase()) {
+            case 'arrowup':
+            case 'w':
+                player.nextDir = {x:0, y:-1};
+                break;
+            case 'arrowdown':
+            case 's':
+                player.nextDir = {x:0, y:1};
+                break;
+            case 'arrowleft':
+            case 'a':
+                player.nextDir = {x:-1, y:0};
+                break;
+            case 'arrowright':
+            case 'd':
+                player.nextDir = {x:1, y:0};
+                break;
+        }
+    }
+}, {passive: false});
+
+window.addEventListener('keyup', e => {
+    const validKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 
+                      'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'];
+    if(validKeys.includes(e.key)) {
+        keys[e.key] = false;
+    }
+});
+
+let touchStartX = 0, touchStartY = 0;
+const MIN_SWIPE_DISTANCE = 15;
+
+gameArea.addEventListener('touchstart', e => { 
+    e.preventDefault();
+    if(gameState !== 'playing') return;
+    
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+}, {passive: false});
+
+gameArea.addEventListener('touchmove', e => { 
+    e.preventDefault();
+    if(gameState !== 'playing') return;
+    
+    const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
+    
+    const deltaX = touchX - touchStartX;
+    const deltaY = touchY - touchStartY;
+    
+    if(Math.abs(deltaX) < MIN_SWIPE_DISTANCE && Math.abs(deltaY) < MIN_SWIPE_DISTANCE) {
+        return;
+    }
+    
+    if(Math.abs(deltaX) > Math.abs(deltaY)) {
+        if(deltaX > 0) {
+            player.nextDir = {x:1, y:0};
+        } else {
+            player.nextDir = {x:-1, y:0};
+        }
+    } else {
+        if(deltaY > 0) {
+            player.nextDir = {x:0, y:1};
+        } else {
+            player.nextDir = {x:0, y:-1};
+        }
+    }
+    
+    touchStartX = touchX;
+    touchStartY = touchY;
+}, {passive: false});
+
+function bindBtn(id, action) { 
+    const btn = document.getElementById(id); 
+    if(!btn) return; 
+    const handler = (e) => { 
+        e.preventDefault(); 
+        e.stopPropagation(); 
+        action(); 
+    }; 
+    btn.addEventListener('touchstart', handler, {passive: false}); 
+    btn.addEventListener('click', handler); 
+    btn.addEventListener('pointerup', handler); 
+}
+
+bindBtn('startBtn', () => { 
+    document.getElementById('startScreen').classList.add('hidden'); 
+    initGame(); 
+});
+
+
+
+bindBtn('retryBtn', () => { 
+    document.getElementById('gameOverScreen').classList.add('hidden'); 
+    initGame(); 
+});
+bindBtn('nextBtn', () => { 
+    document.getElementById('winScreen').classList.add('hidden'); 
+    initGame(); 
+});
+bindBtn('escapeBtn', () => { 
+    document.getElementById('mercyScreen').classList.add('hidden'); 
+    document.getElementById('mainHeader').classList.remove('header-locked');
+    if(animationId) { cancelAnimationFrame(animationId); animationId = null; }
+    gameState = 'playing'; 
+    gameLoop(); 
+});
+function lerpColor(a, b, t) {
+    const ar = parseInt(a.slice(1,3), 16);
+    const ag = parseInt(a.slice(3,5), 16);
+    const ab = parseInt(a.slice(5,7), 16);
+
+    const br = parseInt(b.slice(1,3), 16);
+    const bg = parseInt(b.slice(3,5), 16);
+    const bb = parseInt(b.slice(5,7), 16);
+
+    const r = Math.round(ar + (br - ar) * t);
+    const g = Math.round(ag + (bg - ag) * t);
+    const b2 = Math.round(ab + (bb - ab) * t);
+
+    return `rgb(${r},${g},${b2})`;
+}
+function mixColor(c1, c2, t) {
+    const a = hexToRgb(c1);
+    const b = hexToRgb(c2);
+    const mix = (x, y) => Math.round(x + (y - x) * t);
+    return `rgb(${mix(a.r,b.r)}, ${mix(a.g,b.g)}, ${mix(a.b,b.b)})`;
+}
+
+function hexToRgb(hex) {
+    hex = hex.replace('#', '');
+    return {
+        r: parseInt(hex.substring(0,2), 16),
+        g: parseInt(hex.substring(2,4), 16),
+        b: parseInt(hex.substring(4,6), 16)
+    };
+}
+
+function triggerInfoAlert() {
+  infoToggle.classList.add('info-alert');
+
+  setTimeout(() => {
+    infoToggle.classList.remove('info-alert');
+  }, 6000);
+}
+
+// ===============================
+// 🔓 HUNTER UNLOCK — SYS.LOG
+// ===============================
+let sysLogClicks = 0;
+
+const sysLogEl = document.getElementById('sysLog');
+
+if (sysLogEl) {
+    sysLogEl.addEventListener('click', () => {
+        if (hunterUnlocked) return;
+
+        sysLogClicks++;
+        console.log('SYS.LOG clicks:', sysLogClicks);
+
+        if (sysLogClicks >= 5 && !hunterUnlocked) {
+    hunterUnlocked = true;
+
+    sysLogEl.textContent = 'DW.ERR';
+    sysLogEl.style.color = '#d6b36a';
+
+    showHunterToast();
+}
+    });
+}
+
+function showHunterToast(text = '[ HUNTER PROTOCOL ] UNLOCKED') {
+    if (hunterToastShown) return;
+    hunterToastShown = true;
+
+    const toast = document.getElementById('hunterToast');
+    if (!toast) return;
+
+    toast.textContent = text;
+    toast.classList.remove('hidden');
+
+    // 強制 reflow
+    toast.offsetHeight;
+
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 400);
+    }, 1800);
+}
+updateInfoUI();
+</script>
+</body>
+</html>
