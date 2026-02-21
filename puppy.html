@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAINY DAY - DAWN PUPPY (CYBER EDITION)</title>
+<style>
+/* === 版权: 美化助手:漓的Zero === */@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+:root {
+    --term-bg: #0a0a0a;
+    --term-border: #2a2a2a;
+    --term-text: #a8a8a8;
+    --color-highlight: #d4a017;
+    --color-danger: #a31621;
+    --color-warn: #d68100;
+}
+
+/* =========================
+   基礎重置
+========================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+html, body {
+    background: transparent !important;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 45px 20px 20px;
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--term-text);
+    background: #000;
+}
+
+/* =========================
+   外層終端
+========================= */
+
+.zero-terminal-outer {
+    background: var(--term-bg);
+    border: 2px solid var(--term-border);
+    padding: 10px;
+    max-width: 500px;
+    width: 100%;
+    position: relative;
+    border-radius: 6px;
+
+    box-shadow: 
+        0 0 30px rgba(0,0,0,0.9),
+        inset 0 0 20px rgba(0,0,0,0.8);
+
+    background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+
+    /* 🔥 Safari 修復 */
+    transform: translateZ(0);
+}
+
+/* =========================
+   🔥 全域掃描線（蓋在最上層）
+========================= */
+
+.zero-terminal-outer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+
+    background:
+        linear-gradient(
+            rgba(18,16,16,0) 50%,
+            rgba(0,0,0,0.25) 50%
+        ),
+        linear-gradient(
+            90deg,
+            rgba(255,0,0,0.05),
+            rgba(0,255,0,0.02),
+            rgba(0,0,255,0.05)
+        );
+
+    background-size: 100% 2px, 3px 100%;
+    opacity: 0.8;
+}
+
+/* =========================
+   Header（強掃描線版本）
+========================= */
+
+.term-header {
+    position: relative;
+    border-bottom: 1px solid #333;
+    padding: 6px 8px;
+    margin-bottom: 10px;
+
+    display: flex;
+    justify-content: space-between;
+
+    font-size: 12px;              /* ✅ 統一字體 */
+    letter-spacing: 1px;          /* ✅ 關鍵 */
+    color: #666;
+
+    user-select: none;
+}
+
+.term-header::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    background: linear-gradient(
+        rgba(255,255,255,0.04) 50%,
+        rgba(0,0,0,0.25) 50%
+    );
+
+    background-size: 100% 2px; /* 👈 變細 */
+    opacity: 0.6;              /* 👈 降強度 */
+}
+
+.term-header span:last-child {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.term-header span:last-child.active {
+    color: var(--color-highlight);
+}
+
+/* =========================
+   畫面區域
+========================= */
+
+.zero-screen-inner {
+    background: #050505;
+    border: 1px solid #1a1a1a;
+    padding: 15px 30px 10px;
+
+    min-height: 320px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+    overflow: hidden;
+
+    box-shadow: inset 0 0 15px #000;
+}
+
+/* =========================
+   Canvas（狗狗）
+========================= */
+
+#pixelCanvas {
+    image-rendering: pixelated;
+    width: 320px;
+    height: 320px;
+
+    position: relative;
+    z-index: 10; /* 在掃描線下面 */
+
+    cursor: pointer;
+}
+
+/* =========================
+   說明文字
+========================= */
+
+.scene-text {
+    color: #444;
+    font-size: 10px;
+    text-align: center;
+    margin-top: 8px;
+    height: 24px;
+    letter-spacing: 1.2px;
+}
+
+/* =========================
+   微弱呼吸動畫（可選）
+========================= */
+
+@keyframes subtle-flicker { 
+    0%, 100% { opacity: 0.98; } 
+    50% { opacity: 1; } 
+}
+
+.zero-terminal-outer {
+    animation: subtle-flicker 10s infinite;
+}
+</style>
+</head>
+<body>
+
+<div class="zero-terminal-outer">
+    <div class="term-header">
+        <span>STR_ID: DAWN_PUPPY</span>
+        <span id="leaveLabel">[ LEAVE ]</span>
+    </div>
+
+    <div class="zero-screen-inner">
+        <canvas id="pixelCanvas" width="160" height="160"></canvas>
+        <div class="scene-text" id="statusLog">
+          COLD AND LONELY<br>WAITING FOR SOMEONE
+        </div>
+    </div>
+</div>
+
+<script>
+// === 版权: 美化助手:漓的Zero ===
+
+const canvas = document.getElementById('pixelCanvas');
+const ctx = canvas.getContext('2d');
+const leaveLabel = document.getElementById('leaveLabel');
+
+const C = {
+    bg: '#050505',
+    boxBack: '#634C39', 
+    boxFront: '#735C47', 
+    boxEdge: '#423328',
+    flapLine: '#8C735B',
+    dogHead: '#4A372C', 
+    dogBody: '#382921', 
+    dogEar: '#4A372C',
+    dogLight: '#5E4A3D', 
+    eye: '#080605',
+    eyeAA: 'rgba(8, 6, 5, 0.4)', 
+    eyeHighlight: '#D0D0D0', 
+    eyeTear: 'rgba(255, 255, 255, 0.4)', 
+    scar: '#4A1F1F',    
+    water: 'rgba(80, 110, 150, 0.2)',
+    waterDrop: 'rgba(180, 200, 220, 0.6)',
+    rain: 'rgba(120, 160, 220, 0.25)',
+    heart: 'rgb(255, 100, 150)',
+    mark: '#111111',
+    bone: '#E8D4B8'
+};
+
+const VOICE = {
+
+   angry: [
+    "HEY! THAT’S TOO MUCH.",
+    "STOP IT, REALLY.",
+    "HANDS OFF. NOW.",
+    "SHE DOESN’T LIKE THAT. SERIOUSLY.",
+    "CAREFUL. SHE BITES."
+],
+
+sad: [
+    "YOU’RE REALLY LEAVING HER LIKE THIS?",
+    "IT’S STILL RAINING. SHE’S STILL HERE.",
+    "SHE’S ALRIGHT. REALLY.",
+    "IT’S FINE. SHE’S USED TO IT.",
+    "…DON’T YOU FEEL BAD FOR HER?"
+],
+
+happy: [
+    "OKAY… YOU CAN DO THAT AGAIN.",
+    "SHE DIDN’T PULL AWAY.",
+    "HER TAIL MOVED. JUST A LITTLE.",
+    "YOU SEE THAT? SHE LEANED IN.",
+    "*HMPH*"
+],
+
+scared: [
+    "SHE’S SMALL… HANDLE GENTLY.",
+    "SHE THOUGHT YOU WERE SOMEONE ELSE.",
+    "TOO SUDDEN.",
+    "YOU ALMOST SENT HER RUNNING.",
+    "GIVE HER A SECOND."
+]
+};
+
+// === 旁白池：隨機不重複 ===
+const voicePools = {
+    happy: [...VOICE.happy],
+    angry: [...VOICE.angry],
+    sad: [...VOICE.sad],
+    scared: [...VOICE.scared]
+};
+
+function getRandomVoice(stateName) {
+    if (!voicePools[stateName] || voicePools[stateName].length === 0) {
+        // 如果池子空了，重置
+        voicePools[stateName] = [...VOICE[stateName]];
+    }
+
+    const idx = Math.floor(Math.random() * voicePools[stateName].length);
+    const line = voicePools[stateName][idx];
+
+    // 從池子刪掉這句
+    voicePools[stateName].splice(idx, 1);
+
+    return line;
+}
+
+let state = { 
+    isBlinking: false,
+    mode: 0,
+    shakeFrame: 0,
+    shakeTimer: 0,
+    waterDrops: [],
+    rainDrops: [],
+    hearts: [],
+    clickCount: 0,
+    lastClickTime: 0,
+    idleTimer: 0,
+    isStateLocked: false,
+    lockTimer: 0,
+    boxShake: 0,
+    bone: {
+        x: 25,
+        y: 140,
+        isDragging: false,
+        visible: false
+    },
+    touchStartX: 0,
+    touchStartY: 0,
+    touchStartTime: 0,
+    hasInteracted: false,
+    scareFrame: 0,
+    boneEaten: false,
+    isStroking: false,
+    strokeTimer: 0
+};
+
+for (let i = 0; i < 45; i++) {
+    state.rainDrops.push({
+        x: Math.random() * 160,
+        y: Math.random() * 160 - 30,
+        speed: Math.random() * 1.5 + 0.8
+    });
+}
+
+function drawBone(x, y) {
+    ctx.fillStyle = C.bone;
+    ctx.fillRect(x+2, y+2, 8, 2);
+    ctx.fillRect(x, y, 3, 6);
+    ctx.fillRect(x+9, y, 3, 6);
+    
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fillRect(x, y+5, 3, 1);
+    ctx.fillRect(x+9, y+5, 3, 1);
+}
+
+function drawFixedPaws(offsetX) {
+    ctx.fillStyle = C.dogLight; 
+    ctx.fillRect(70-2+offsetX, 120, 6, 4); 
+    ctx.fillRect(70+16+offsetX, 120, 6, 4); 
+}
+
+function drawDetailedHead(baseX, offsetX, shakeOffset) {
+    baseX += shakeOffset;
+    
+    ctx.fillStyle = C.dogHead; 
+    ctx.fillRect(baseX, 102, 20, 20);
+
+    let ox = offsetX; 
+    
+    ctx.fillStyle = C.dogEar;
+    if (state.mode === 1 || state.mode === 2) {
+        ctx.fillRect(baseX-3+ox, 104, 6, 4); 
+        ctx.fillRect(baseX-4+ox, 105, 1, 2); 
+        ctx.fillRect(baseX-2+ox, 103, 5, 1); 
+        ctx.fillRect(baseX-7+ox, 106, 4, 3); 
+        ctx.fillRect(baseX-9+ox, 107, 2, 2); 
+        
+        ctx.fillRect(baseX+17+ox, 104, 6, 4); 
+        ctx.fillRect(baseX+23+ox, 105, 1, 2); 
+        ctx.fillRect(baseX+18+ox, 103, 4, 1); 
+        ctx.fillRect(baseX+23+ox, 106, 4, 3); 
+        ctx.fillRect(baseX+27+ox, 107, 2, 2); 
+    } else {
+        ctx.fillRect(baseX-1+ox, 102, 4, 4); 
+        ctx.fillRect(baseX-3+ox, 100, 6, 2); 
+        ctx.fillRect(baseX+ox, 100, 3, 1);
+        ctx.fillRect(baseX+ox, 101, 3, 1); 
+        ctx.fillRect(baseX-5+ox, 102, 4, 3); 
+        ctx.fillRect(baseX-4+ox, 105, 3, 4);
+        
+        ctx.fillRect(baseX+17+ox, 100, 5, 6); 
+        ctx.fillRect(baseX+19+ox, 98, 3, 2);
+    }
+
+    ctx.fillStyle = C.dogLight; 
+    ctx.fillRect(baseX+5+ox, 116, 10, 6);
+    
+    if (state.scareFrame > 0) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(baseX+3+ox, 113, 4, 3); 
+        ctx.fillRect(baseX+14+ox, 113, 4, 3); 
+    } else if (state.isBlinking) {
+        ctx.fillStyle = C.dogLight; 
+        ctx.fillRect(baseX+3+ox, 113, 4, 3); 
+        ctx.fillRect(baseX+14+ox, 113, 4, 3); 
+        ctx.fillStyle = '#3F2F25'; 
+        ctx.fillRect(baseX+3+ox, 114, 4, 1); 
+        ctx.fillRect(baseX+14+ox, 114, 4, 1); 
+    } else if (state.mode === 3) {
+        ctx.fillStyle = C.eye;
+        ctx.fillRect(baseX+3+ox, 114, 4, 1); 
+        ctx.fillRect(baseX+14+ox, 114, 4, 1); 
+    } else {
+        ctx.fillStyle = C.eye;
+        ctx.fillRect(baseX+4+ox, 113, 2, 3); 
+        ctx.fillRect(baseX+14+ox, 113, 2, 3); 
+        ctx.fillStyle = C.eyeAA;
+        ctx.fillRect(baseX+3+ox, 113, 1, 3); 
+        ctx.fillRect(baseX+16+ox, 113, 1, 3); 
+        
+        if (state.mode === 1) {
+          ctx.fillStyle = C.dogHead; 
+          ctx.fillRect(baseX+5+ox, 113, 1, 1); 
+          ctx.fillRect(baseX+14+ox, 113, 1, 1); 
+        }
+        
+        if (state.mode === 2) {
+          ctx.fillStyle = C.eyeHighlight;
+          ctx.fillRect(baseX+4+ox, 113, 1, 1); 
+          ctx.fillRect(baseX+14+ox, 113, 1, 1); 
+          
+          ctx.fillStyle = C.eyeTear;
+          ctx.fillRect(baseX+5+ox, 115, 1, 1);
+          ctx.fillRect(baseX+15+ox, 115, 1, 1);
+        }
+    }
+
+    ctx.fillStyle = C.eye; 
+    ctx.fillRect(baseX+7+ox, 118, 6, 2);
+
+    ctx.fillStyle = C.scar;
+    ctx.fillRect(baseX+9+ox, 111, 1, 1); 
+    ctx.fillRect(baseX+10+ox, 112, 1, 1); 
+    ctx.fillRect(baseX+11+ox, 113, 1, 1); 
+    ctx.fillRect(baseX+12+ox, 114, 1, 1); 
+    ctx.fillRect(baseX+13+ox, 115, 1, 1); 
+    ctx.fillRect(baseX+15+ox, 116, 1, 1); 
+    ctx.fillRect(baseX+16+ox, 117, 1, 1); 
+    ctx.fillRect(baseX+16+ox, 118, 1, 1); 
+}
+
+function draw() {
+    ctx.clearRect(0, 0, 160, 160);
+
+    ctx.fillStyle = C.rain;
+    state.rainDrops.forEach(drop => {
+        ctx.fillRect(drop.x, drop.y, 2, 4);
+        drop.y += drop.speed;
+        if (drop.y > 160) {
+          drop.y = -30;
+          drop.x = Math.random() * 160;
+        }
+    });
+
+    let shakeOffset = 0;
+    if (state.boxShake > 0) {
+        let f = state.boxShake;
+        if (f <= 3) shakeOffset = -3;
+        else if (f <= 6) shakeOffset = 3;
+        else if (f <= 9) shakeOffset = -2;
+        else if (f <= 12) shakeOffset = 2;
+        state.boxShake++;
+        if (state.boxShake > 12) state.boxShake = 0;
+    }
+
+    let dogShakeOffset = 0;
+    if (state.scareFrame > 0) {
+        if (state.scareFrame <= 5) dogShakeOffset = -3;
+        else if (state.scareFrame <= 10) dogShakeOffset = 3;
+        else if (state.scareFrame <= 15) dogShakeOffset = -2;
+        else if (state.scareFrame <= 20) dogShakeOffset = 2;
+        else if (state.scareFrame <= 25) dogShakeOffset = -1;
+        else if (state.scareFrame <= 30) dogShakeOffset = 1;
+        state.scareFrame++;
+        if (state.scareFrame > 30) {
+          state.scareFrame = 0;
+          state.mode = 0;
+          updateLog();
+        }
+    }
+
+    ctx.fillStyle = '#111'; ctx.fillRect(0, 140, 160, 20); 
+    ctx.fillStyle = C.boxBack; ctx.fillRect(50+shakeOffset, 105, 60, 35); 
+
+    ctx.fillStyle = C.dogBody; ctx.fillRect(68+shakeOffset+dogShakeOffset, 118, 24, 7); 
+    ctx.fillStyle = C.boxFront; ctx.fillRect(50+shakeOffset, 122, 60, 22); 
+    ctx.strokeStyle = C.boxEdge; ctx.strokeRect(50+shakeOffset, 122, 60, 22);
+    
+    ctx.fillStyle = C.mark; ctx.fillRect(52+shakeOffset, 138, 8, 2); 
+    ctx.strokeStyle = C.flapLine; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(50+shakeOffset, 122); ctx.lineTo(40+shakeOffset, 135); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(110+shakeOffset, 122); ctx.lineTo(120+shakeOffset, 135); ctx.stroke();
+
+    if (state.shakeFrame > 0) {
+        let f = state.shakeFrame;
+        if (f <= 8) drawDetailedHead(70, -2, shakeOffset+dogShakeOffset);      
+        else if (f <= 16) drawDetailedHead(70, 2, shakeOffset+dogShakeOffset); 
+        else if (f <= 24) drawDetailedHead(70, -2, shakeOffset+dogShakeOffset); 
+        else if (f <= 32) drawDetailedHead(70, 2, shakeOffset+dogShakeOffset); 
+        else if (f <= 40) drawDetailedHead(70, 0, shakeOffset+dogShakeOffset); 
+        
+        state.shakeFrame++;
+        if (state.shakeFrame > 40) state.shakeFrame = 0;
+    } else {
+        drawDetailedHead(70, 0, shakeOffset+dogShakeOffset); 
+    }
+    
+    drawFixedPaws(shakeOffset+dogShakeOffset);
+
+    if (state.bone.visible) {
+        state.bone.x = Math.max(0, Math.min(148, state.bone.x));
+        state.bone.y = Math.max(0, Math.min(154, state.bone.y));
+        drawBone(state.bone.x, state.bone.y);
+    }
+
+    ctx.fillStyle = C.waterDrop;
+    state.waterDrops.forEach((drop, idx) => {
+        ctx.fillRect(drop.x, drop.y, 2, 2);
+        drop.x += drop.vx; 
+        drop.y += drop.vy; 
+        drop.vy += 0.3;
+        drop.life--;
+        if (drop.life <= 0) state.waterDrops.splice(idx, 1);
+    });
+
+    state.hearts.forEach((heart, idx) => {
+        ctx.fillStyle = C.heart;
+        ctx.fillRect(heart.x, heart.y, 2, 2);
+        ctx.fillRect(heart.x+3, heart.y, 2, 2);
+        ctx.fillRect(heart.x+1, heart.y+2, 4, 2);
+        ctx.fillRect(heart.x+2, heart.y+4, 2, 1);
+        
+        heart.y -= 0.5;
+        heart.life--;
+        if (heart.life <= 0) state.hearts.splice(idx, 1);
+    });
+    
+    ctx.fillStyle = C.water; 
+    ctx.fillRect(40, 145, 80, 2);
+}
+
+function loop() {
+    draw();
+    
+    state.shakeTimer++;
+    if (state.shakeTimer > 480 && state.shakeFrame === 0) {
+        state.shakeFrame = 1;
+        state.shakeTimer = 0;
+        
+        for (let i = 0; i < 18; i++) {
+          state.waterDrops.push({
+          x: 65 + Math.random() * 30,
+          y: 100 + Math.random() * 10,
+          vx: (Math.random() - 0.5) * 8,
+          vy: -Math.random() * 4 - 1,
+          life: 25 + Math.random() * 15
+          });
+        }
+    }
+
+    if (state.hasInteracted && !state.isStroking && state.scareFrame === 0) {
+        state.idleTimer++;
+        if (state.idleTimer > 480 && state.mode !== 2 && !state.isStateLocked) {
+          state.mode = 2;
+          updateLog();
+        }
+    }
+
+    if (Date.now() - state.lastClickTime > 1500) {
+        state.clickCount = 0;
+    }
+
+    if (state.isStateLocked && !state.isStroking) {
+        state.lockTimer++;
+        if (state.lockTimer > 120) {
+          state.isStateLocked = false;
+          state.lockTimer = 0;
+          state.mode = 0;
+          updateLog();
+        }
+    }
+
+    if (state.isStroking) {
+        state.strokeTimer++;
+        if (state.strokeTimer > 15) {
+          state.hearts.push({
+          x: 65 + Math.random() * 30,
+          y: 95 + Math.random() * 10,
+          life: 90
+          });
+          state.strokeTimer = 0;
+        }
+    }
+    
+    requestAnimationFrame(loop);
+}
+
+function triggerBlink() {
+    if (state.mode !== 3 && state.scareFrame === 0) {
+        state.isBlinking = true;
+        setTimeout(() => {
+          state.isBlinking = false;
+          setTimeout(triggerBlink, Math.random() * 4000 + 2000);
+        }, 150);
+    } else {
+        setTimeout(triggerBlink, 500);
+    }
+}
+
+function updateLog() {
+    const log = document.getElementById('statusLog');
+
+    if (!state.hasInteracted) {
+        log.innerHTML = 'COLD AND LONELY<br>WAITING FOR SOMEONE';
+        log.style.color = '#444';
+    } else if (state.scareFrame > 0) {
+        const text = getRandomVoice('scared');
+        log.innerHTML = text;
+        log.style.color = '#FFFFFF';
+    } else if (state.mode === 1) {
+        const text = getRandomVoice('angry');
+        log.innerHTML = text;
+        log.style.color = '#d68100';
+    } else if (state.mode === 2) {
+        const text = getRandomVoice('sad');
+        log.innerHTML = text;
+        log.style.color = '#5a8fb4';
+    } else if (state.mode === 3) {
+        const text = getRandomVoice('happy');
+        log.innerHTML = text;
+        log.style.color = '#d4a017';
+    } else {
+        log.innerHTML = '';
+        log.style.color = '#444';
+    }
+}
+
+function resetToIdle() {
+    leaveLabel.classList.add('active');
+    setTimeout(() => {
+        leaveLabel.classList.remove('active');
+    }, 300);
+    
+    state.hasInteracted = false;
+    state.mode = 0;
+    state.boneEaten = false;
+    state.bone.visible = false;
+    state.bone.x = 25;
+    state.bone.y = 140;
+    state.idleTimer = 0;
+    state.clickCount = 0;
+    state.isStateLocked = false;
+    state.lockTimer = 0;
+    state.boxShake = 0;
+    state.scareFrame = 0;
+    state.waterDrops = [];
+    state.hearts = [];
+    state.isStroking = false;
+    state.strokeTimer = 0;
+    updateLog();
+}
+
+leaveLabel.addEventListener('click', resetToIdle);
+
+canvas.addEventListener('touchstart', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 160 / rect.width;
+    const scaleY = 160 / rect.height;
+    const x = (e.touches[0].clientX - rect.left) * scaleX;
+    const y = (e.touches[0].clientY - rect.top) * scaleY;
+
+    state.touchStartX = x;
+    state.touchStartY = y;
+    state.touchStartTime = Date.now();
+
+    if (state.scareFrame > 0) {
+        e.preventDefault();
+        return;
+    }
+
+    if (state.bone.visible && x >= state.bone.x-2 && x <= state.bone.x+14 && y >= state.bone.y-2 && y <= state.bone.y+8) {
+        state.bone.isDragging = true;
+        e.preventDefault();
+    } else if (x >= 60 && x <= 100 && y >= 98 && y <= 122) {
+        if (!state.hasInteracted) {
+          state.hasInteracted = true;
+          state.scareFrame = 1;
+          state.idleTimer = 0;
+          updateLog();
+        }
+        e.preventDefault();
+    }
+}, {passive: false});
+
+canvas.addEventListener('touchmove', (e) => {
+    if (state.scareFrame > 0) {
+        e.preventDefault();
+        return;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 160 / rect.width;
+    const scaleY = 160 / rect.height;
+    const x = (e.touches[0].clientX - rect.left) * scaleX;
+    const y = (e.touches[0].clientY - rect.top) * scaleY;
+
+    if (state.bone.isDragging) {
+        state.bone.x = x - 6;
+        state.bone.y = y - 3;
+        e.preventDefault();
+    } else if (x >= 60 && x <= 100 && y >= 98 && y <= 122 && state.hasInteracted) {
+        if (!state.isStroking) {
+          state.isStroking = true;
+          state.mode = 3;
+          state.idleTimer = 0;
+          updateLog();
+        }
+        e.preventDefault();
+    }
+}, {passive: false});
+
+canvas.addEventListener('touchend', (e) => {
+    if (state.scareFrame > 0) {
+        e.preventDefault();
+        return;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 160 / rect.width;
+    const x = (e.changedTouches[0].clientX - rect.left) * scaleX;
+    
+    const dragDistance = Math.abs(x - state.touchStartX);
+    const touchDuration = Date.now() - state.touchStartTime;
+
+    if (state.isStroking) {
+        state.isStroking = false;
+        state.strokeTimer = 0;
+        state.mode = 0;
+        state.idleTimer = 0;
+        updateLog();
+    }
+
+    if (state.bone.isDragging) {
+        state.bone.isDragging = false;
+        
+        if (state.bone.x >= 60 && state.bone.x <= 100 && state.bone.y >= 98 && state.bone.y <= 122) {
+          state.bone.visible = false;
+          state.boneEaten = true;
+          state.mode = 3;
+          state.isStateLocked = true;
+          state.lockTimer = 0;
+          state.idleTimer = 0;
+          updateLog();
+          
+          for (let i = 0; i < 5; i++) {
+          state.hearts.push({
+          x: 65 + Math.random() * 30,
+          y: 95 + Math.random() * 10,
+          life: 90
+          });
+          }
+        } else if (state.bone.y < 140) {
+          state.bone.x = 25;
+          state.bone.y = 140;
+        }
+    } else if (dragDistance > 30 && touchDuration < 500 && state.hasInteracted) {
+        if (state.boxShake === 0 && !state.isStateLocked) {
+          state.boxShake = 1;
+          state.mode = 1;
+          state.isStateLocked = true;
+          state.lockTimer = 0;
+          state.idleTimer = 0;
+          updateLog();
+          
+          if (!state.bone.visible && !state.boneEaten) {
+          state.bone.visible = true;
+          }
+        }
+    } else if (touchDuration < 500 && state.hasInteracted) {
+        handleTap(x, e.changedTouches[0].clientY);
+    }
+});
+
+function handleTap(x, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleY = 160 / rect.height;
+    const y = (clientY - rect.top) * scaleY;
+
+    if (x >= 60 && x <= 100 && y >= 98 && y <= 122) {
+        if (state.isStateLocked) return;
+
+        if (state.mode === 2) {
+          state.mode = 0;
+          state.idleTimer = 0;
+          updateLog();
+          return;
+        }
+
+        state.idleTimer = 0;
+        state.clickCount++;
+        state.lastClickTime = Date.now();
+
+        if (state.clickCount >= 5) {
+          state.mode = 1;
+          state.isStateLocked = true;
+          state.lockTimer = 0;
+          state.clickCount = 0;
+          updateLog();
+        }
+    }
+}
+
+loop();
+triggerBlink();
+
+</script>
+
+</body>
+</html>
